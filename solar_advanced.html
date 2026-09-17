@@ -2335,6 +2335,69 @@
             margin: 0;
         }
 
+        .chatbot-text p + p,
+        .chatbot-text p + ul,
+        .chatbot-text p + ol,
+        .chatbot-text ul + p,
+        .chatbot-text ol + p,
+        .chatbot-text h3 + p,
+        .chatbot-text h4 + p {
+            margin-top: 10px;
+        }
+
+        .chatbot-text h3,
+        .chatbot-text h4 {
+            margin: 14px 0 6px;
+            color: var(--text);
+            font: 700 15px/1.35 'Space Grotesk', sans-serif;
+        }
+
+        .chatbot-text h3:first-child,
+        .chatbot-text h4:first-child {
+            margin-top: 0;
+        }
+
+        .chatbot-text ol {
+            margin: 8px 0;
+            padding-left: 22px;
+        }
+
+        .chatbot-table-wrap {
+            max-width: 100%;
+            margin: 10px 0;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .chatbot-table {
+            width: 100%;
+            min-width: 420px;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .chatbot-table th,
+        .chatbot-table td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+        }
+
+        .chatbot-table th {
+            background: var(--bg-alt);
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .chatbot-table tr:last-child td {
+            border-bottom: 0;
+        }
+
         .chatbot-message.user .chatbot-text {
             background: linear-gradient(135deg, rgba(250, 204, 21, 0.15), rgba(250, 204, 21, 0.05));
             border-color: rgba(250, 204, 21, 0.2);
@@ -4736,6 +4799,15 @@
         .sidebar .chatbot-text strong { color: var(--planner-blue); }
         .sidebar .chatbot-text p { color: var(--planner-muted); }
         .sidebar .chatbot-text a { color: var(--planner-blue); }
+        .sidebar .chatbot-text h3,
+        .sidebar .chatbot-text h4 { color: var(--planner-ink); }
+        .sidebar .chatbot-table-wrap { border-color: var(--planner-line); }
+        .sidebar .chatbot-table th {
+            background: var(--planner-blue-soft);
+            color: var(--planner-blue-dark);
+        }
+        .sidebar .chatbot-table th,
+        .sidebar .chatbot-table td { border-bottom-color: var(--planner-line); }
         .sidebar .chatbot-message.user .chatbot-text {
             border-color: var(--planner-blue);
             background: var(--planner-blue);
@@ -8455,11 +8527,14 @@ Feel free to ask me anything about your solar investment!`;
             const messagesContainer = document.getElementById('aiChatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `ai-message ${sender}`;
+            const formattedText = sender === 'bot'
+                ? formatAIMarkdown(text)
+                : escapeAIHTML(text).replace(/\n/g, '<br>');
             
             const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             
             messageDiv.innerHTML = `
-                <div class="ai-message-text">${text.replace(/\n/g, '<br>')}</div>
+                <div class="ai-message-text">${formattedText}</div>
                 <div class="ai-message-time">${time}</div>
             `;
             
@@ -8577,7 +8652,7 @@ Feel free to ask me anything about your solar investment!`;
             userMsgDiv.className = 'chatbot-message user';
             userMsgDiv.innerHTML = `
                 <div class="chatbot-avatar"><i class="fas fa-user"></i></div>
-                <div class="chatbot-text">${message}</div>
+                <div class="chatbot-text">${escapeAIHTML(message)}</div>
             `;
             messagesContainer.appendChild(userMsgDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -8636,8 +8711,9 @@ FORMATTING RULES:
 - Use **bold** for critical numbers, KPIs, and key terms
 - Structure responses with clear sections when appropriate
 - Use bullet points for multi-item lists
+- Do not use Markdown tables; use short labeled bullet points instead
 - Include specific calculations when relevant
-- Keep responses focused and actionable (4-6 sentences typical)
+- Keep responses under 250 words unless the user explicitly asks for a detailed analysis
 - Do NOT use emojis - maintain professional tone
 - Reference specific data from the calculator when available
 - Use the selected location and currency; never invent a local tariff, incentive, or regulation
@@ -8653,7 +8729,7 @@ ${systemContext}`
                             },
                             { role: 'user', content: message }
                         ],
-                        max_tokens: 900,
+                        max_tokens: 550,
                         temperature: 0.6
                     })
                 });
@@ -8688,7 +8764,10 @@ ${systemContext}`
                     <div class="chatbot-text">${formattedReply}</div>
                 `;
                 messagesContainer.appendChild(botMsgDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                requestAnimationFrame(() => {
+                    const messageTop = botMsgDiv.offsetTop - messagesContainer.offsetTop - 8;
+                    messagesContainer.scrollTo({ top: Math.max(0, messageTop), behavior: 'smooth' });
+                });
                 
             } catch (error) {
                 const typing = document.getElementById('chatbotTyping');
@@ -8707,7 +8786,7 @@ ${systemContext}`
                 } else if (isConfigError) {
                     helpMessage = '⚙️ <strong>AI API not configured</strong><br><br>Set AI_PROVIDER, AI_API_KEY, AI_BASE_URL and AI_MODEL in the environment. GROQ_API_KEY remains supported as a fallback.';
                 } else {
-                    helpMessage = `Sorry, I encountered an error: ${errorMessage}`;
+                    helpMessage = `Sorry, I encountered an error: ${escapeAIHTML(errorMessage)}`;
                 }
                 
                 const errorMsgDiv = document.createElement('div');
@@ -8724,25 +8803,106 @@ ${systemContext}`
             }
         }
 
-        // Format AI response with markdown support
+        function escapeAIHTML(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatAIInline(value) {
+            return escapeAIHTML(value)
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+                .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        }
+
+        function parseMarkdownTableRow(line) {
+            return line.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.trim());
+        }
+
+        function isMarkdownTableDivider(line) {
+            const cells = parseMarkdownTableRow(line);
+            return cells.length > 0 && cells.every(cell => /^:?-{3,}:?$/.test(cell));
+        }
+
+        // Format the small Markdown subset used by AI responses without allowing raw HTML.
         function formatAIMarkdown(text) {
-            return text
-                // Convert **bold** to <strong>
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                // Convert *italic* to <em>
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                // Convert bullet points
-                .replace(/^[\-\•]\s+(.+)$/gm, '<li>$1</li>')
-                // Wrap consecutive list items in <ul>
-                .replace(/(<li>.*<\/li>\n?)+/g, '<ul style="margin: 8px 0 8px 16px; padding: 0;">$&</ul>')
-                // Convert numbered lists
-                .replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>')
-                // Convert double newlines to paragraphs
-                .replace(/\n\n/g, '</p><p style="margin-top: 12px;">')
-                // Convert single newlines to <br>
-                .replace(/\n/g, '<br>')
-                // Wrap in paragraph
-                .replace(/^(.+)$/, '<p>$1</p>');
+            const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
+            const output = [];
+            let paragraph = [];
+            let listType = null;
+            let listItems = [];
+
+            const flushParagraph = () => {
+                if (!paragraph.length) return;
+                output.push(`<p>${paragraph.map(formatAIInline).join('<br>')}</p>`);
+                paragraph = [];
+            };
+
+            const flushList = () => {
+                if (!listItems.length) return;
+                output.push(`<${listType}>${listItems.map(item => `<li>${formatAIInline(item)}</li>`).join('')}</${listType}>`);
+                listItems = [];
+                listType = null;
+            };
+
+            for (let index = 0; index < lines.length; index++) {
+                const line = lines[index].trim();
+
+                if (!line) {
+                    flushParagraph();
+                    flushList();
+                    continue;
+                }
+
+                if (index + 1 < lines.length && line.includes('|') && isMarkdownTableDivider(lines[index + 1])) {
+                    flushParagraph();
+                    flushList();
+                    const headers = parseMarkdownTableRow(line);
+                    const rows = [];
+                    index += 2;
+                    while (index < lines.length && lines[index].trim().includes('|')) {
+                        rows.push(parseMarkdownTableRow(lines[index]));
+                        index++;
+                    }
+                    index--;
+                    const head = headers.map(cell => `<th>${formatAIInline(cell)}</th>`).join('');
+                    const body = rows.map(row => `<tr>${headers.map((_, cellIndex) => `<td>${formatAIInline(row[cellIndex] || '')}</td>`).join('')}</tr>`).join('');
+                    output.push(`<div class="chatbot-table-wrap"><table class="chatbot-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
+                    continue;
+                }
+
+                const heading = line.match(/^(#{2,4})\s+(.+)$/);
+                if (heading) {
+                    flushParagraph();
+                    flushList();
+                    const tag = heading[1].length <= 2 ? 'h3' : 'h4';
+                    output.push(`<${tag}>${formatAIInline(heading[2])}</${tag}>`);
+                    continue;
+                }
+
+                const bullet = line.match(/^[-•]\s+(.+)$/);
+                const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+                if (bullet || numbered) {
+                    flushParagraph();
+                    const nextListType = numbered ? 'ol' : 'ul';
+                    if (listType && listType !== nextListType) flushList();
+                    listType = nextListType;
+                    listItems.push((bullet || numbered)[1]);
+                    continue;
+                }
+
+                flushList();
+                paragraph.push(line);
+            }
+
+            flushParagraph();
+            flushList();
+            return output.join('');
         }
 
         function displayWeatherCard(data) {
