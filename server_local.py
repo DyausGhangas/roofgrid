@@ -25,6 +25,11 @@ logger = logging.getLogger("roofgrid")
 
 PORT = 8000
 REQUEST_TIMEOUT = 15  # seconds
+OVERPASS_REQUEST_TIMEOUT = 8
+OVERPASS_ENDPOINTS = (
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.openstreetmap.fr/api/interpreter",
+)
 MAX_CONTACT_REQUEST_SIZE = 16 * 1024
 NASA_CACHE = {}
 
@@ -32,6 +37,33 @@ NASA_CACHE = {}
 BBOX_PATTERN = re.compile(
     r'^-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*$'
 )
+
+
+def fetch_overpass_data(overpass_query):
+    """Return valid Overpass JSON, trying a second public instance if needed."""
+    request_data = urllib.parse.urlencode({'data': overpass_query}).encode()
+
+    for endpoint in OVERPASS_ENDPOINTS:
+        try:
+            request = urllib.request.Request(endpoint, data=request_data, method='POST')
+            request.add_header('User-Agent', 'RoofGrid/1.0 (rooftop planning tool)')
+            request.add_header('Content-Type', 'application/x-www-form-urlencoded')
+            request.add_header('Accept', 'application/json')
+
+            with urllib.request.urlopen(request, timeout=OVERPASS_REQUEST_TIMEOUT) as response:
+                result = response.read()
+
+            payload = json.loads(result.decode('utf-8'))
+            if not isinstance(payload, dict) or not isinstance(payload.get('elements'), list):
+                raise ValueError('Response did not contain an elements list')
+
+            logger.info('Overpass response from %s: %d bytes', endpoint, len(result))
+            return result
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError,
+                UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+            logger.warning('Overpass endpoint %s failed: %s', endpoint, error)
+
+    raise RuntimeError('All configured Overpass endpoints failed')
 
 def load_local_environment():
     """Load project environment files without overriding shell variables.
@@ -205,7 +237,7 @@ class ProxyRequestHandler(http.server.SimpleHTTPRequestHandler):
                     return
                 
                 overpass_query = f"""
-                [out:json][timeout:25];
+                [out:json][timeout:12];
                 (
                     way["building"]({bbox});
                     relation["building"]({bbox});
@@ -215,37 +247,21 @@ class ProxyRequestHandler(http.server.SimpleHTTPRequestHandler):
                 
                 logger.info("Overpass request: bbox=%s", bbox)
                 
-                overpass_url = "https://overpass-api.de/api/interpreter"
-                data = urllib.parse.urlencode({'data': overpass_query}).encode()
-                
-                req = urllib.request.Request(overpass_url, data=data, method='POST')
-                req.add_header('User-Agent', 'RoofGrid-Global/1.0')
-                req.add_header('Content-Type', 'application/x-www-form-urlencoded')
-                
-                with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as response:
-                    result = response.read()
-                
-                logger.info("Overpass response: %d bytes", len(result))
+                result = fetch_overpass_data(overpass_query)
+
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
+                self.send_header('Cache-Control', 'public, max-age=300')
                 self.end_headers()
                 self.wfile.write(result)
                 
-            except urllib.error.HTTPError as e:
-                logger.error("Overpass API HTTP %d", e.code)
+            except RuntimeError as error:
+                logger.error('Overpass providers unavailable: %s', error)
                 self.send_response(502)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({
-                    'error': 'Building data service unavailable. Please try again.'
-                }).encode())
-            except urllib.error.URLError as e:
-                logger.error("Overpass network error: %s", e.reason)
-                self.send_response(502)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({
-                    'error': 'Network error. Please try again.'
+                    'error': 'Building outline service is temporarily unavailable. Please try again in a moment.'
                 }).encode())
             except Exception as e:
                 logger.exception("Overpass proxy error")

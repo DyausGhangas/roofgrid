@@ -12,10 +12,6 @@
       "destination": "/api/groq.py"
     },
     {
-      "source": "/api/overpass",
-      "destination": "/api/overpass.py"
-    },
-    {
       "source": "/api/contact",
       "destination": "/api/contact.py"
     }

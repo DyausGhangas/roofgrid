@@ -401,7 +401,9 @@
         .footer-row img { width: 145px; }
         .footer-copy { margin: 0; color: var(--muted); font: 400 10px/1.5 "DM Mono", monospace; }
         .footer-links { display: flex; flex-wrap: wrap; gap: 24px; }
-        .footer-links a { color: var(--ink); font-size: 12px; font-weight: 700; text-decoration: none; }
+        .footer-links a { color: var(--ink); font-size: 12px; font-weight: 700; text-decoration: none; transition: color .2s ease; }
+        .footer-links a:hover,
+        .footer-links a:focus-visible { color: var(--blue); }
 
         [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
         [data-reveal].visible { opacity: 1; transform: none; }
@@ -652,7 +654,7 @@
                 <a href="index.html" aria-label="RoofGrid home"><img src="assets/images/roofgrid-wordmark.png" alt="RoofGrid"></a>
                 <p class="footer-copy">© <span id="year"></span> RoofGrid. All rights reserved.</p>
             </div>
-            <div class="footer-links"><a href="privacy.html">Privacy Policy</a><a href="#contact">Contact us</a><a href="#main">Top ↑</a></div>
+            <div class="footer-links"><a href="privacy.html">Privacy Policy</a><a href="#contact">Contact us</a><a href="https://github.com/rohanmalhotracodes/roofgrid" target="_blank" rel="noopener noreferrer">GitHub</a><a href="#main">Top ↑</a></div>
         </div>
     </footer>
 

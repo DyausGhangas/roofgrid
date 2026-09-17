@@ -4,97 +4,275 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Privacy Policy — RoofGrid</title>
-    <meta name="description" content="RoofGrid privacy policy and information about how the rooftop solar planner handles data.">
-    <meta name="theme-color" content="#f5f2e8">
+    <meta name="description" content="How RoofGrid handles information used by the rooftop solar planner, AI assistant, and contact form.">
+    <meta name="theme-color" content="#0a66c2">
+    <meta name="robots" content="index, follow">
     <link rel="icon" href="assets/images/roofgrid-blue-favicon-v2.svg" type="image/svg+xml" sizes="any">
     <link rel="shortcut icon" href="assets/images/roofgrid-blue-favicon-v2.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png" sizes="180x180">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <style>
-        :root { --ink:#17231f; --paper:#f5f2e8; --white:#fffef9; --lime:#d7ff45; --blue:#2458ff; --muted:#68736d; --line:rgba(23,35,31,.18); }
-        * { box-sizing: border-box; }
-        body { margin: 0; color: var(--ink); background: var(--paper); font-family: "Manrope", sans-serif; line-height: 1.68; -webkit-font-smoothing: antialiased; }
+        :root {
+            --ink: #0b1f33;
+            --ink-soft: #29445d;
+            --blue: #0a66c2;
+            --blue-dark: #07539f;
+            --blue-soft: #edf6ff;
+            --muted: #5d748b;
+            --line: #d6e6f5;
+            --white: #ffffff;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: var(--white);
+            font-family: "Manrope", sans-serif;
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+        }
+
         a { color: inherit; }
-        .shell { width: min(900px, calc(100% - 40px)); margin-inline: auto; }
-        header { border-bottom: 1px solid var(--line); background: rgba(245,242,232,.9); }
-        nav { width: min(1380px, calc(100% - 48px)); min-height: 82px; margin-inline: auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-        .brand img { width: 176px; }
-        .back { padding: 11px 17px; border: 1px solid var(--ink); border-radius: 99px; font-size: 13px; font-weight: 800; text-decoration: none; }
-        main { padding: 90px 0 120px; }
-        .kicker { margin: 0 0 20px; color: var(--blue); font: 500 12px/1 "DM Mono", monospace; letter-spacing: .1em; text-transform: uppercase; }
-        h1 { max-width: 760px; margin: 0; font-size: clamp(54px, 9vw, 94px); line-height: .92; letter-spacing: -.065em; }
-        .intro { max-width: 680px; margin: 28px 0 58px; color: var(--muted); font-size: 18px; }
-        .policy { padding: clamp(28px, 6vw, 60px); border: 1px solid var(--line); border-radius: 30px; background: var(--white); }
-        .policy section + section { margin-top: 45px; padding-top: 42px; border-top: 1px solid var(--line); }
-        h2 { margin: 0 0 13px; font-size: 25px; letter-spacing: -.035em; }
-        p { margin: 0; color: #405049; }
-        p + p, ul + p { margin-top: 14px; }
-        ul { margin: 15px 0 0; padding-left: 22px; color: #405049; }
+        img { display: block; }
+        ::selection { color: var(--white); background: var(--blue); }
+
+        .skip-link {
+            position: fixed;
+            top: -80px;
+            left: 20px;
+            z-index: 100;
+            padding: 11px 16px;
+            border-radius: 0 0 10px 10px;
+            color: var(--white);
+            background: var(--ink);
+        }
+        .skip-link:focus { top: 0; }
+
+        .shell { width: min(1040px, calc(100% - 48px)); margin-inline: auto; }
+        .site-header { background: var(--white); border-bottom: 1px solid var(--line); }
+        .nav {
+            width: min(1380px, calc(100% - 48px));
+            min-height: 82px;
+            margin-inline: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+        .brand { display: inline-flex; align-items: center; }
+        .brand img { width: 181px; height: auto; }
+        .back {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 19px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--blue);
+            background: var(--white);
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: border-color .2s ease, background .2s ease;
+        }
+        .back:hover,
+        .back:focus-visible { border-color: var(--blue); background: var(--blue-soft); }
+
+        main { padding: clamp(64px, 9vw, 112px) 0 110px; }
+        .hero { max-width: 800px; }
+        .kicker {
+            margin: 0 0 18px;
+            color: var(--blue);
+            font: 500 12px/1 "DM Mono", monospace;
+            letter-spacing: .11em;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: 0;
+            font-size: clamp(48px, 8vw, 82px);
+            line-height: .98;
+            letter-spacing: -.06em;
+        }
+        .intro { max-width: 720px; margin: 26px 0 0; color: var(--muted); font-size: clamp(17px, 2vw, 20px); }
+        .effective {
+            display: inline-block;
+            margin-top: 24px;
+            color: var(--ink-soft);
+            font: 500 11px/1.4 "DM Mono", monospace;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .summary {
+            margin: 56px 0 18px;
+            padding: 24px 26px;
+            border-left: 4px solid var(--blue);
+            background: var(--blue-soft);
+        }
+        .summary strong { display: block; margin-bottom: 6px; color: var(--blue-dark); font-size: 16px; }
+        .summary p { margin: 0; color: var(--ink-soft); }
+
+        .policy { margin-top: 34px; }
+        .policy section {
+            display: grid;
+            grid-template-columns: 56px minmax(0, 1fr);
+            gap: 22px;
+            padding: 34px 0;
+            border-top: 1px solid var(--line);
+        }
+        .section-number {
+            color: var(--blue);
+            font: 500 12px/1.4 "DM Mono", monospace;
+            letter-spacing: .06em;
+        }
+        .section-content { max-width: 790px; }
+        h2 { margin: 0 0 10px; font-size: clamp(21px, 3vw, 27px); line-height: 1.2; letter-spacing: -.035em; }
+        p { margin: 0; color: var(--ink-soft); }
+        p + p { margin-top: 13px; }
+        ul { margin: 14px 0 0; padding-left: 20px; color: var(--ink-soft); }
         li + li { margin-top: 8px; }
-        .date { display: inline-flex; margin-top: 26px; padding: 9px 12px; border-radius: 8px; background: var(--lime); font: 500 10px/1 "DM Mono", monospace; }
-        footer { padding: 34px 0; border-top: 1px solid var(--line); color: var(--muted); font: 400 10px/1.5 "DM Mono", monospace; }
-        @media (max-width:600px) { nav { width: calc(100% - 28px); } .brand img { width: 145px; } main { padding-top: 60px; } }
+        .text-link { color: var(--blue); font-weight: 700; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+        footer { padding: 34px 0 42px; border-top: 1px solid var(--line); background: var(--white); }
+        .footer-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
+        .footer-brand { display: grid; justify-items: start; gap: 10px; }
+        .footer-brand img { width: 145px; }
+        .footer-copy { margin: 0; color: var(--muted); font: 400 10px/1.5 "DM Mono", monospace; }
+        .footer-links { display: flex; flex-wrap: wrap; gap: 24px; }
+        .footer-links a { color: var(--ink); font-size: 12px; font-weight: 700; text-decoration: none; transition: color .2s ease; }
+        .footer-links a:hover,
+        .footer-links a:focus-visible { color: var(--blue); }
+
+        @media (max-width: 640px) {
+            .shell, .nav { width: calc(100% - 28px); }
+            .nav { min-height: 72px; }
+            .brand img { width: 148px; }
+            main { padding-top: 52px; }
+            .summary { margin-top: 40px; padding: 20px; }
+            .policy section { grid-template-columns: 1fr; gap: 10px; padding: 28px 0; }
+            .footer-row { align-items: flex-start; flex-direction: column; }
+        }
+        @media (max-width: 400px) {
+            .brand img { width: 132px; }
+            .back { min-height: 40px; padding-inline: 13px; font-size: 12px; }
+            h1 { overflow-wrap: anywhere; }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <nav aria-label="Privacy page navigation">
+    <a class="skip-link" href="#privacy-content">Skip to privacy policy</a>
+
+    <header class="site-header">
+        <nav class="nav" aria-label="Privacy page navigation">
             <a class="brand" href="index.html" aria-label="RoofGrid home"><img src="assets/images/roofgrid-wordmark.png" alt="RoofGrid"></a>
             <a class="back" href="index.html">Back to home</a>
         </nav>
     </header>
 
-    <main>
+    <main id="privacy-content">
         <div class="shell">
-            <p class="kicker">RoofGrid / Legal</p>
-            <h1>Privacy, in plain language.</h1>
-            <p class="intro">This policy explains what information RoofGrid may process when you use the website, planner, AI features, or contact options.</p>
-            <div class="policy">
-                <section>
-                    <h2>Information you choose to provide</h2>
-                    <p>RoofGrid processes the addresses, map locations, roof geometry, project assumptions, and solar-planning inputs you enter so it can produce layouts and estimates. If you use the AI assistant, your message and relevant project context are sent to the configured AI service. If you contact us, we receive the details you include in your message or contact form.</p>
-                </section>
-                <section>
-                    <h2>Location and map services</h2>
-                    <p>If you grant browser location permission, your device provides coordinates to the planner. Address searches and roof detection may send a query, coordinates, or a map bounding box to mapping and building-data services such as OpenStreetMap, Nominatim, Overpass, and Esri. NASA POWER receives coordinates used to retrieve climate information.</p>
-                </section>
-                <section>
-                    <h2>Service providers</h2>
-                    <p>RoofGrid may rely on hosting and analytics providers, mapping services, NASA POWER, the configured AI provider for optional chat, and FormSubmit to forward contact-form messages by email. These providers process information under their own privacy terms and may operate in different countries.</p>
-                </section>
-                <section>
-                    <h2>Storage and retention</h2>
-                    <p>Most planning interactions happen in your browser or through short-lived API requests. Hosting, analytics, AI, and contact providers may retain operational logs or submitted information according to their own policies. Exported project and PDF files are saved to the location you choose on your device.</p>
-                </section>
-                <section>
-                    <h2>Your choices</h2>
-                    <ul>
-                        <li>You can decline browser location access and search or move the map manually.</li>
-                        <li>You can use the planner without sending a message to the AI assistant.</li>
-                        <li>You can avoid the contact form and email us directly.</li>
-                        <li>You may request access, correction, or deletion of contact information we control, subject to applicable law.</li>
-                    </ul>
-                </section>
-                <section>
-                    <h2>Children</h2>
-                    <p>RoofGrid is a technical planning tool and is not directed to children. Do not submit personal information through the contact form if you are not permitted to do so in your jurisdiction.</p>
-                </section>
-                <section>
-                    <h2>Changes to this policy</h2>
-                    <p>We may update this page as RoofGrid’s features or service providers change. The effective date below identifies the current version.</p>
-                </section>
-                <section>
-                    <h2>Contact</h2>
-                    <p>For privacy questions or requests, use the <a href="index.html#contact">RoofGrid contact form</a>.</p>
-                    <span class="date">Effective 16 September 2026</span>
-                </section>
+            <div class="hero">
+                <p class="kicker">Privacy Policy</p>
+                <h1>Your data, explained clearly.</h1>
+                <p class="intro">This policy describes the information RoofGrid uses to create rooftop plans, answer AI questions, and deliver contact messages.</p>
+                <span class="effective">Effective 16 September 2026</span>
             </div>
+
+            <div class="summary">
+                <strong>The short version</strong>
+                <p>You can plan a roof without creating an account. RoofGrid shares only the information needed to provide mapping, climate, AI, analytics, or contact-form features with the relevant service providers.</p>
+            </div>
+
+            <article class="policy" aria-label="RoofGrid privacy policy">
+                <section>
+                    <span class="section-number">01</span>
+                    <div class="section-content">
+                        <h2>Information you provide</h2>
+                        <p>RoofGrid processes the addresses, map locations, roof geometry, project assumptions, and solar-planning inputs you enter to produce layouts and estimates.</p>
+                    </div>
+                </section>
+
+                <section>
+                    <span class="section-number">02</span>
+                    <div class="section-content">
+                        <h2>Location and map data</h2>
+                        <p>If you allow browser location access, your device provides coordinates to the planner. Address search, map imagery, building outlines, and climate requests may send a query, coordinates, or the visible map area to services such as OpenStreetMap, Nominatim, Overpass, Esri, and NASA POWER.</p>
+                        <p>You can decline location permission and search for a place or move the map manually.</p>
+                    </div>
+                </section>
+
+                <section>
+                    <span class="section-number">03</span>
+                    <div class="section-content">
+                        <h2>AI assistant and contact form</h2>
+                        <p>If you use the optional AI assistant, your message and relevant project context are sent through RoofGrid's server-side proxy to the configured AI provider. If you use the contact form, your email address, subject, and message are sent through FormSubmit to the RoofGrid inbox.</p>
+                        <p>You can use the main planning tools without using either feature.</p>
+                    </div>
+                </section>
+
+                <section>
+                    <span class="section-number">04</span>
+                    <div class="section-content">
+                        <h2>Service providers</h2>
+                        <p>RoofGrid relies on Vercel for hosting and analytics, mapping and building-data services, NASA POWER for climate data, the configured AI provider for chat, and FormSubmit for contact-form delivery. Each provider handles information under its own privacy terms and may process it in different countries.</p>
+                    </div>
+                </section>
+
+                <section>
+                    <span class="section-number">05</span>
+                    <div class="section-content">
+                        <h2>Storage and retention</h2>
+                        <p>Most planning interactions happen in your browser or through short-lived API requests. Service providers may retain operational logs or submitted information according to their own policies. Reports and exported project files are saved only to the location you choose on your device.</p>
+                    </div>
+                </section>
+
+                <section>
+                    <span class="section-number">06</span>
+                    <div class="section-content">
+                        <h2>Your choices</h2>
+                        <ul>
+                            <li>Decline browser location permission and navigate manually.</li>
+                            <li>Use the planner without sending messages to the AI assistant.</li>
+                            <li>Choose whether to submit the contact form.</li>
+                            <li>Request access, correction, or deletion of contact information RoofGrid controls, subject to applicable law.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section>
+                    <span class="section-number">07</span>
+                    <div class="section-content">
+                        <h2>Children's privacy</h2>
+                        <p>RoofGrid is a technical planning tool and is not directed to children. Do not submit personal information through the contact form unless you are permitted to do so in your jurisdiction.</p>
+                    </div>
+                </section>
+
+                <section>
+                    <span class="section-number">08</span>
+                    <div class="section-content">
+                        <h2>Updates and questions</h2>
+                        <p>This policy may change as RoofGrid's features or providers change. The effective date above identifies the current version. For privacy questions or requests, use the <a class="text-link" href="index.html#contact">contact form</a>.</p>
+                    </div>
+                </section>
+            </article>
         </div>
     </main>
 
-    <footer><div class="shell">© <span id="year"></span> RoofGrid.</div></footer>
+    <footer>
+        <div class="shell footer-row">
+            <div class="footer-brand">
+                <a href="index.html" aria-label="RoofGrid home"><img src="assets/images/roofgrid-wordmark.png" alt="RoofGrid"></a>
+                <p class="footer-copy">© <span id="year"></span> RoofGrid. All rights reserved.</p>
+            </div>
+            <div class="footer-links"><a href="index.html">Home</a><a href="index.html#contact">Contact us</a><a href="https://github.com/rohanmalhotracodes/roofgrid" target="_blank" rel="noopener noreferrer">GitHub</a><a href="#privacy-content">Top ↑</a></div>
+        </div>
+    </footer>
+
     <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>
