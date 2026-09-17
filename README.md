@@ -1,122 +1,135 @@
 <p align="center">
-  <img src="assets/images/roofgrid-wordmark.png" alt="RoofGrid" width="240">
+  <img src="assets/images/roofgrid-wordmark.png" alt="RoofGrid" width="260">
 </p>
 
 <p align="center">
-  Access-aware rooftop solar planning with editable energy, financial, and environmental assumptions.
+  <strong>Turn a real rooftop into a practical, access-aware solar plan.</strong>
 </p>
 
-## What RoofGrid does
+<p align="center">
+  Locate a roof, map usable space, place panels, and explore energy, financial, and environmental outcomes in one workflow.
+</p>
 
-RoofGrid helps you turn a real rooftop into an early-stage solar plan. Search for an address, select or draw a roof, reserve access and maintenance space, mark obstacles, and arrange panels inside the usable area. The planner then estimates system capacity, energy generation, savings, payback, and avoided emissions.
+![RoofGrid landing page showing an access-aware rooftop solar layout](assets/screenshots/landing-page.png)
 
-RoofGrid is a planning and exploration tool, not an engineering design, structural assessment, permit set, or installer quote.
+## Why RoofGrid
 
-## Features
+Early solar estimates often start and end with a panel count. RoofGrid adds the real constraints that determine whether a rooftop plan is usable: roof geometry, access routes, maintenance space, obstacles, and editable local assumptions.
 
-- Satellite mapping with worldwide address search and GPS support
+The result is an early-stage planning workspace that helps property owners, designers, students, and sustainability teams understand a roof's solar potential before moving to detailed engineering.
+
+## From rooftop to decision
+
+1. **Locate** — search globally, use your current location, or navigate directly on the satellite map.
+2. **Define** — detect a building footprint or draw the usable roof boundary yourself.
+3. **Plan** — reserve rooftop access and maintenance paths, mark obstacles, and configure the panel layout.
+4. **Estimate** — review expected generation, system size, cost, savings, payback, and environmental impact.
+5. **Explain** — use the optional AI assistant to explore results and identify questions for local professionals.
+
+### Find and define a rooftop
+
+![RoofGrid planner showing global satellite search and roof setup controls](assets/screenshots/planner-setup.png)
+
+### Review energy potential
+
+![RoofGrid energy analysis showing production and solar resource estimates](assets/screenshots/energy-analysis.png)
+
+### Explore financial outcomes
+
+![RoofGrid financial analysis showing cost, savings, return, and payback estimates](assets/screenshots/financial-analysis.png)
+
+### Ask questions about the plan
+
+![RoofGrid AI assistant explaining the financial results for a rooftop plan](assets/screenshots/ai-assistant.png)
+
+## Core capabilities
+
+- Worldwide satellite mapping, address search, and GPS support
 - OpenStreetMap building-footprint detection and manual roof drawing
-- Rooftop access points, maintenance paths, and obstacle exclusions
-- Configurable panel specifications and layout controls
-- NASA POWER solar-resource and temperature data
-- Editable local currency, tariff, export-credit, cost, usage, and emissions inputs
-- Energy, financial, and environmental estimates
-- Optional AI assistant through Groq or another OpenAI-compatible API
-- Downloadable PDF reports
-- Responsive landing page and planning workspace
+- Access points, maintenance paths, and obstacle exclusion zones
+- Configurable panel dimensions, spacing, orientation, and layout density
+- NASA POWER solar-resource and temperature data with bundled regional fallbacks
+- Editable currency, tariffs, export credit, installation cost, usage, and grid-emissions assumptions
+- Energy, financial, and environmental estimates in one planning workspace
+- Optional Groq-powered AI assistant and downloadable PDF reports
 
-## Technology
+## Environmental impact and the SDGs
 
-| Area | Implementation |
+RoofGrid is designed to support better early decisions about distributed solar. It can help users compare how much clean electricity a rooftop may generate, understand whether a layout is practical, and estimate avoided grid emissions using transparent, editable assumptions.
+
+This work aligns with four United Nations Sustainable Development Goals:
+
+| Goal | How RoofGrid contributes |
 | --- | --- |
-| Frontend | HTML, CSS, and vanilla JavaScript |
-| Maps and geometry | Leaflet, Esri World Imagery, OpenStreetMap, Turf.js |
-| Solar data | NASA POWER API with bundled regional fallback data |
-| Local server | Python standard library HTTP server and private API proxies |
-| Deployment | Vercel static hosting and Python serverless functions |
-| AI | Server-side OpenAI-compatible chat-completions proxy; Groq by default |
-| Reports | jsPDF and html2canvas |
+| [SDG 7 — Affordable and Clean Energy](https://sdgs.un.org/goals/goal7) | Makes rooftop renewable-energy potential easier to explore and supports informed investment in solar generation. |
+| [SDG 11 — Sustainable Cities and Communities](https://sdgs.un.org/goals/goal11) | Helps evaluate existing urban rooftops as distributed-energy sites while accounting for safe access and maintainability. |
+| [SDG 12 — Responsible Consumption and Production](https://sdgs.un.org/goals/goal12) | Encourages efficient use of available roof area and exposes the material, energy, and financial assumptions behind a proposed system. |
+| [SDG 13 — Climate Action](https://sdgs.un.org/goals/goal13) | Estimates potential avoided emissions so users can compare rooftop solar scenarios as part of broader decarbonization planning. |
+
+RoofGrid reports estimated annual and lifetime energy generation, avoided CO₂e, and simple environmental equivalents. These values are decision-support estimates—not audited carbon accounting, verified emissions reductions, or certification of SDG performance.
+
+In practical terms, the planner helps quantify:
+
+- how much of a roof can be used without ignoring access and obstacle constraints;
+- the renewable electricity a proposed layout may produce;
+- the share of local electricity use that solar could cover; and
+- the potential emissions avoided under an editable grid-emissions assumption.
+
+## How the estimates are built
+
+| Area | Source or method |
+| --- | --- |
+| Map and geometry | Leaflet, Esri World Imagery, OpenStreetMap, and Turf.js |
+| Solar resource | NASA POWER API with bundled regional fallback data |
+| Layout | Browser-based geometry using the selected roof, exclusions, access path, and panel settings |
+| Finance | User-editable cost, tariff, export-credit, usage, degradation, and discount assumptions |
+| Environmental impact | Estimated generation multiplied by an editable grid-emissions factor |
+| AI | Optional server-side OpenAI-compatible chat proxy, configured for Groq by default |
 
 ## Run locally
 
 Requirements: Python 3.9 or newer and a modern browser.
 
 ```bash
-git clone git@github.com:rohanmalhotracodes/RoofGrid.git
-cd RoofGrid
+git clone git@github.com:rohanmalhotracodes/roofgrid.git
+cd roofgrid
 cp .env.example .env.local
 python3 server_local.py
 ```
 
-Then open:
+Open <http://localhost:8000>. Use `server_local.py` rather than opening the HTML files directly because RoofGrid's AI, OpenStreetMap, contact, and NASA requests use private proxy routes.
 
-- Landing page: <http://localhost:8000/index.html>
-- Planner: <http://localhost:8000/solar_advanced.html>
+### Environment variables
 
-Use `server_local.py` instead of opening the HTML file directly or running a basic static-file server. RoofGrid's AI, OpenStreetMap, and NASA requests use its local proxy routes.
+Only the relevant private values need to be added to `.env.local`:
 
-## Configure Groq AI
+```dotenv
+GROQ_API_KEY=gsk_your_real_key
+CONTACT_EMAIL=you@example.com
+```
 
-AI chat is optional; mapping and solar calculations work without it.
+`GROQ_API_KEY` enables AI chat. `CONTACT_EMAIL` routes contact-form messages through FormSubmit; the recipient may need to confirm FormSubmit's one-time activation email. Provider, model, and other optional AI settings are documented in `.env.example`.
 
-1. Copy the example environment file:
-
-   ```bash
-   cp .env.example .env.local
-   ```
-
-2. Add your Groq key to `.env.local`:
-
-   ```dotenv
-   AI_PROVIDER=groq
-   GROQ_API_KEY=gsk_your_real_key
-   AI_MODEL=openai/gpt-oss-120b
-   ```
-
-   To enable contact-form delivery, also set the private recipient:
-
-   ```dotenv
-   CONTACT_EMAIL=you@example.com
-   ```
-
-3. Restart `python3 server_local.py` after changing the file.
-
-`.env.local` is ignored by Git. Never put a real API key in `.env.example`, frontend JavaScript, or a committed file.
-
-For another OpenAI-compatible provider, set `AI_PROVIDER`, `AI_API_KEY`, `AI_BASE_URL`, and `AI_MODEL`. Optional `AI_AUTH_HEADER`, `AI_AUTH_SCHEME`, and `AI_ALLOW_NO_AUTH` settings are documented in `.env.example`.
+Never put real credentials in `.env.example`, frontend JavaScript, or any committed file. Restart the local server after changing `.env.local`.
 
 ## Deploy to Vercel
 
-The included `vercel.json` serves the site and maps private proxy routes to the Python functions in `api/`.
+1. Import this repository into Vercel and select the **Other** framework preset.
+2. Leave the build, output, and install commands empty; `vercel.json` contains the required routes.
+3. Add `GROQ_API_KEY` and `CONTACT_EMAIL` under **Production and Preview** environment variables.
+4. Add any optional AI provider or model variables described in `.env.example`.
+5. Deploy again after adding or changing environment variables.
 
-1. Import this repository into Vercel.
-2. Add `GROQ_API_KEY` and `CONTACT_EMAIL` in the Vercel project's environment variables.
-3. Optionally add `AI_PROVIDER` and `AI_MODEL` if you do not want the defaults.
-4. Redeploy after changing environment variables.
+Keep these variables server-side. Do not prefix them with `NEXT_PUBLIC_` or expose them in browser code.
 
-Do not prefix server-side environment variables with `NEXT_PUBLIC_` or otherwise expose them to browser code.
+## Planning limitations
 
-## Project structure
+- Satellite imagery and OpenStreetMap outlines may be incomplete, outdated, or misaligned.
+- Production, cost, savings, payback, and emissions results depend on the assumptions entered by the user.
+- Shade, structural capacity, electrical design, fire setbacks, permits, tariffs, and equipment availability require local verification.
+- AI responses may be inaccurate and do not replace utility guidance, regulations, engineering, or professional advice.
 
-```text
-.
-├── api/                    # Vercel Python proxy functions
-├── assets/                 # Current RoofGrid logos and page imagery
-├── data/Weather Data/      # Bundled NASA POWER fallback datasets
-├── index.html              # Landing page
-├── privacy.html            # Privacy policy
-├── solar_advanced.html     # Rooftop planner
-├── server_local.py         # Local static server and API proxies
-├── sw.js                   # Service worker
-└── vercel.json             # Vercel routes and headers
-```
-
-## Data and planning limitations
-
-- Satellite imagery and OpenStreetMap outlines may be incomplete or outdated.
-- Solar production and financial outputs depend on the assumptions entered by the user.
-- Confirm roof structure, shading, fire setbacks, electrical requirements, permits, tariffs, and equipment choices with qualified local professionals.
-- AI responses may be inaccurate and should not replace local regulations, utility guidance, or professional advice.
+RoofGrid is an exploration and planning tool—not an engineering design, structural assessment, permit set, installer quote, or carbon-accounting product.
 
 ## License
 
