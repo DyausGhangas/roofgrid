@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 80" role="img" aria-labelledby="title desc">
+  <title id="title">RoofGrid</title>
+  <desc id="desc">RoofGrid blue solar roof mark.</desc>
+  <g fill="#0A66C2">
+    <path d="M18 13h32L39 31H7z"/>
+    <path d="M54 13h32L75 31H43z"/>
+    <path d="M7 36h32L28 54H0z"/>
+    <path d="M43 36h32L64 54H32z"/>
+    <path d="M64 54 88 13l40 41h-18L89 33 77 54z"/>
+  </g>
+</svg>
