@@ -5361,10 +5361,6 @@
                             <span class="card-title"><i class="fas fa-receipt"></i> Investment</span>
                         </div>
                         <div class="result-item">
-                            <span class="result-label"><i class="fas fa-tag"></i> System Cost</span>
-                            <span class="result-value" id="systemCost">--</span>
-                        </div>
-                        <div class="result-item">
                             <span class="result-label"><i class="fas fa-wallet"></i> Net Cost</span>
                             <span class="result-value highlight" id="netCost">--</span>
                         </div>
@@ -8060,7 +8056,6 @@
                 coverageElement.title = 'Optimal panel coverage for selected roof area';
 
                 // Update Financial Analysis section
-                const systemCostEl = document.getElementById('systemCost');
                 const netCostEl = document.getElementById('netCost');
                 const annualSavingsEl = document.getElementById('annualSavings');
                 const roiPercentEl = document.getElementById('roiPercent');
@@ -8068,7 +8063,6 @@
                 const totalProfitEl = document.getElementById('totalProfit');
                 const npvValueEl = document.getElementById('npvValue');
 
-                if (systemCostEl) systemCostEl.textContent = formatMoney(systemCostAED);
                 if (netCostEl) netCostEl.textContent = formatMoney(netCostAED);
                 if (annualSavingsEl) annualSavingsEl.textContent = formatMoney(annualSavingsAED);
                 if (roiPercentEl) roiPercentEl.textContent = `${roiPercent.toFixed(1)}%`;
@@ -10021,7 +10015,7 @@ ${systemContext}`
 
                 drawSectionHeading('Financial outlook', 139);
                 const financeRows = [
-                    ['Estimated system cost', formatMoney(systemCost)],
+                    ['Estimated net cost', formatMoney(systemCost)],
                     ['Estimated annual savings', formatMoney(annualSavings)],
                     ['Simple payback', `${formatNumber(paybackYears, 1)} years`],
                     ['Annual ROI', `${formatNumber(annualROI, 1)}%`],

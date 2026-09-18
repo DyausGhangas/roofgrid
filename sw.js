@@ -1,5 +1,5 @@
 // RoofGrid Service Worker — Offline Support & Caching
-const CACHE_NAME = 'roofgrid-v34';
+const CACHE_NAME = 'roofgrid-v35';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
