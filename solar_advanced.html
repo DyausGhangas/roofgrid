@@ -735,49 +735,6 @@
             font-weight: 700;
         }
 
-        /* Feature toolbar */
-        .feature-toolbar {
-            display: flex;
-            gap: 8px;
-            padding: 8px;
-            background: var(--bg-alt);
-            border-radius: 10px;
-            margin-top: 12px;
-        }
-
-        .feature-btn {
-            flex: 1;
-            padding: 10px 8px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .feature-btn:hover {
-            background: var(--bg-subtle);
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .feature-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: #F8FAFC;
-        }
-
-        .feature-btn i {
-            font-size: 16px;
-        }
-
         /* Obstacle list */
         .obstacle-list {
             max-height: 120px;
@@ -3882,14 +3839,6 @@
                 display: none;
             }
 
-            .feature-toolbar {
-                flex-wrap: wrap;
-            }
-
-            .feature-btn {
-                flex: 1 1 30%;
-            }
-
             .back-btn {
                 padding: 8px 12px;
                 font-size: 12px;
@@ -4066,19 +4015,6 @@
                 font-size: 26px;
             }
 
-            .feature-toolbar {
-                padding: 6px;
-                gap: 6px;
-            }
-
-            .feature-btn {
-                padding: 8px 6px;
-                font-size: 10px;
-            }
-
-            .feature-btn i {
-                font-size: 14px;
-            }
         }
 
         /* Reduce Motion Support */
@@ -4657,23 +4593,6 @@
             box-shadow: 0 5px 18px rgba(11, 31, 51, .07);
         }
 
-        .feature-toolbar {
-            padding: 6px;
-            border: 1px solid var(--planner-line);
-            background: #edf5fd;
-        }
-        .feature-btn {
-            border-color: transparent;
-            background: transparent;
-            color: var(--planner-muted);
-        }
-        .feature-btn:hover {
-            border-color: #b9dcff;
-            background: #fff;
-            color: var(--planner-blue);
-        }
-        .feature-btn.active { border-color: var(--planner-blue); background: var(--planner-blue); color: #fff; }
-
         .analysis-action {
             display: none;
             margin-top: 14px;
@@ -5191,26 +5110,6 @@
                                 <div class="stat-value success" id="panelsFit">0 / 0</div>
                                 <div class="stat-label">Panels Fit</div>
                             </div>
-                        </div>
-
-                        <!-- Advanced Features Toolbar -->
-                        <div class="feature-toolbar">
-                            <button class="feature-btn" id="rooftopEntryBtn" onclick="startRooftopEntryPlacement()" title="Mark the roof hatch, stair or ladder access point">
-                                <i class="fas fa-person-walking"></i>
-                                <span>Roof Access</span>
-                            </button>
-                            <button class="feature-btn" id="obstacleBtn" onclick="toggleObstacleMode()" title="Mark obstacles like AC units, vents">
-                                <i class="fas fa-ban"></i>
-                                <span>Obstacles</span>
-                            </button>
-                            <button class="feature-btn" id="multiRoofBtn" onclick="toggleMultiRoofMode()" title="Add multiple roof sections">
-                                <i class="fas fa-layer-group"></i>
-                                <span>Multi-Roof</span>
-                            </button>
-                            <button class="feature-btn" onclick="generatePDFReport()" title="Download impact report">
-                                <i class="fas fa-file-pdf"></i>
-                                <span>PDF</span>
-                            </button>
                         </div>
 
                         <!-- Multiple Roofs Section -->
@@ -9068,13 +8967,13 @@ ${systemContext}`
             const indicator = document.getElementById('drawingModeIndicator');
             
             if (obstacleMode) {
-                btn.classList.add('active');
+                if (btn) btn.classList.add('active');
                 section.style.display = 'block';
                 indicator.classList.add('active');
                 document.getElementById('drawingModeText').textContent = 'Click on roof to mark obstacles';
                 showStatus('🎯 Obstacle mode ON - Click on roof to mark AC units, vents, skylights', 'info');
             } else {
-                btn.classList.remove('active');
+                if (btn) btn.classList.remove('active');
                 indicator.classList.remove('active');
                 showStatus('Obstacle mode OFF', 'info');
             }
