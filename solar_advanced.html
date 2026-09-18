@@ -2768,25 +2768,6 @@
            UI/UX ENHANCEMENTS
            ============================ */
 
-        /* Pulse animation for calculate button when roof is drawn */
-        .btn-primary.pulse-ready {
-            animation: pulseGlow 2s ease-in-out infinite;
-        }
-        @keyframes pulseGlow {
-            0%, 100% {
-                box-shadow: 0 8px 24px rgba(250, 204, 21, 0.4),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            }
-            50% {
-                box-shadow: 0 8px 32px rgba(250, 204, 21, 0.7),
-                            0 0 48px rgba(250, 204, 21, 0.3),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            }
-        }
-        .btn-primary.pulse-ready:hover {
-            animation: none;
-        }
-
         /* Staggered entrance animation for results */
         .results-enter {
             animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -4627,6 +4608,13 @@
             font: 700 15px/1.3 'Space Grotesk', sans-serif;
         }
         #calculateBtn { min-height: 46px; margin: 0; }
+        #calculateBtn.pulse-ready {
+            animation: none;
+            box-shadow: 0 8px 22px rgba(10, 102, 194, .2), 0 0 0 3px rgba(10, 102, 194, .08);
+        }
+        #calculateBtn.pulse-ready:hover {
+            box-shadow: 0 10px 26px rgba(10, 102, 194, .24), 0 0 0 3px rgba(10, 102, 194, .11);
+        }
         #calculateBtn:disabled { opacity: .45; filter: none; }
         #calculateHint { color: var(--planner-muted); }
 
