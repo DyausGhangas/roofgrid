@@ -6329,37 +6329,6 @@
         let visualizePanelsTimeout = null;
         let isVisualizing = false;
         let userSetRotation = false; // Track if user manually set rotation
-        let hasShownPanelLoadingSequence = false; // Track if loading animation shown
-
-        // Panel loading sequence with calculation steps
-        function showPanelLoadingSequence(callback) {
-            const steps = [
-                { text: '🔍 Analyzing roof geometry...', duration: 1000 },
-                { text: '📐 Determining optimal panel tilt...', duration: 1000 },
-                { text: '🧭 Calculating panel orientation...', duration: 1000 },
-                { text: '⚡ Optimizing panel layout...', duration: 1000 },
-                { text: '✨ Finalizing solar configuration...', duration: 1000 }
-            ];
-
-            let currentStep = 0;
-            const overlay = document.getElementById('loadingOverlay');
-            const loadingText = document.getElementById('loadingText');
-            
-            overlay.classList.add('active');
-
-            function showNextStep() {
-                if (currentStep < steps.length) {
-                    loadingText.textContent = steps[currentStep].text;
-                    currentStep++;
-                    setTimeout(showNextStep, steps[currentStep - 1].duration);
-                } else {
-                    overlay.classList.remove('active');
-                    if (callback) callback();
-                }
-            }
-
-            showNextStep();
-        }
 
         // Auto-optimize panel rotation to fit maximum panels
         function optimizePanelRotation(roofPolygon, targetCount) {
@@ -9714,21 +9683,41 @@ ${systemContext}`
             showStatus('Click every rooftop obstacle, then choose “Finish and place panels”.', 'info');
         }
 
-        function confirmNoObstacles() {
+        async function confirmNoObstacles() {
             if (obstacles.length) clearAllObstacles();
-            finishObstacleStep();
+            await finishObstacleStep();
         }
 
-        function finishObstacleStep() {
+        async function finishObstacleStep() {
             if (obstacleMode) toggleObstacleMode();
-            rebuildRooftopAccessNetwork();
-            if (!rooftopAccessLines.length) {
-                showStatus('Panels were not placed because there is no accessible route from the rooftop entry. Move the entry or an obstacle.', 'warning');
+            showLoading('Preparing your panel layout...', 'Checking roof access and usable space. Large rooftops can take a few seconds.');
+            await waitForNextPaint();
+
+            try {
+                rebuildRooftopAccessNetwork();
+                if (!rooftopAccessLines.length) {
+                    showStatus('Panels were not placed because there is no accessible route from the rooftop entry. Move the entry or an obstacle.', 'warning');
+                    return;
+                }
+
+                awaitingRooftopEntry = false;
+                setPlannerStage('panels');
+                updateLoadingState('Finding the best panel arrangement...', 'Testing panel positions against the roof boundary and maintenance access.');
+                await waitForNextPaint();
+                refreshPanelsForAccessPlan();
+
+                updateLoadingState('Drawing the panel layout...', `Placing ${currentPanelCount.toLocaleString()} panels on the map.`);
+                await waitForNextPaint();
+                // updateRoofArea queues the final map render; keep feedback visible until it completes.
+                await new Promise(resolve => setTimeout(resolve, 160));
+            } catch (error) {
+                _error('Panel layout error:', error);
+                showStatus('The panel layout could not be completed. Please try again.', 'error');
                 return;
+            } finally {
+                hideLoading();
             }
-            awaitingRooftopEntry = false;
-            setPlannerStage('panels');
-            refreshPanelsForAccessPlan();
+
             const panelSection = document.getElementById('panelControlSection');
             if (panelSection) panelSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             showStatus(`Panel layout created with ${obstacles.length} obstacle${obstacles.length === 1 ? '' : 's'} and connected maintenance access.`, 'success');
