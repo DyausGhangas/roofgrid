@@ -4639,6 +4639,47 @@
         .sidebar .quick-stat-label {
             color: var(--planner-ink) !important;
         }
+        .sidebar .quick-summary {
+            padding: 0;
+            overflow: hidden;
+        }
+        .sidebar .quick-summary::before { display: none; }
+        .sidebar .quick-summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0;
+        }
+        .sidebar .quick-stat {
+            min-height: 118px;
+            padding: 22px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 0;
+            background: #fff;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+        .sidebar .quick-stat:nth-child(odd) { border-right: 1px solid var(--planner-line); }
+        .sidebar .quick-stat:nth-child(-n + 2) { border-bottom: 1px solid var(--planner-line); }
+        .sidebar .quick-stat:hover {
+            background: var(--planner-blue-soft);
+            transform: none;
+            box-shadow: none;
+        }
+        .sidebar .quick-stat-value {
+            font-size: 22px;
+            line-height: 1.2;
+            white-space: nowrap;
+            text-shadow: none;
+        }
+        .sidebar .quick-stat-label {
+            margin-top: 7px;
+            color: var(--planner-muted) !important;
+            font-size: 11px;
+            font-weight: 650;
+        }
         .sidebar .card-title i,
         .sidebar .result-label i {
             color: var(--planner-blue) !important;
