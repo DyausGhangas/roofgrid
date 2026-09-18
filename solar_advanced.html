@@ -3273,34 +3273,44 @@
         /* Status Message - Toast Notifications */
         .status-message {
             position: fixed;
-            bottom: 28px;
+            bottom: 24px;
             left: 50%;
-            transform: translateX(-50%) translateY(100px) scale(0.95);
-            padding: 14px 24px;
-            border-radius: 14px;
-            font-size: 14px;
-            font-weight: 600;
+            transform: translateX(-50%) translateY(36px);
+            padding: 11px 16px 11px 11px;
+            border-radius: 13px;
+            font-size: 13px;
+            line-height: 1.4;
+            font-weight: 650;
             z-index: 100000;
             opacity: 0;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35),
-                        0 4px 12px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(12px) saturate(180%);
-            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            transition: opacity .25s ease, transform .25s ease;
+            box-shadow: 0 12px 30px rgba(11, 31, 51, .16), 0 2px 8px rgba(11, 31, 51, .08);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             display: flex;
             align-items: center;
             gap: 10px;
-            min-width: 260px;
-            max-width: 90vw;
+            min-width: 0;
+            max-width: min(520px, calc(100vw - 32px));
             justify-content: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, .96);
+            color: #0b1f33;
+            border: 1px solid #b9dcff;
         }
 
         .status-message::before {
             content: '';
             font-family: 'Font Awesome 6 Free';
             font-weight: 900;
-            font-size: 16px;
+            font-size: 13px;
+            width: 28px;
+            height: 28px;
+            flex: 0 0 28px;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            background: #0a66c2;
         }
 
         .status-message.success::before {
@@ -3320,33 +3330,35 @@
         }
 
         .status-message.show {
-            transform: translateX(-50%) translateY(0) scale(1);
+            transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
 
         .status-message.success {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%);
-            color: white;
-            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(247, 251, 255, .97);
+            color: #0b1f33;
+            border-color: #8fc7fb;
         }
 
         .status-message.error {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
-            color: white;
-            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(255, 248, 247, .97);
+            color: #7a271a;
+            border-color: #f5b7ae;
         }
+        .status-message.error::before { background: #d92d20; }
 
         .status-message.info {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(37, 99, 235, 0.95) 100%);
-            color: white;
-            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(247, 251, 255, .97);
+            color: #0b1f33;
+            border-color: #b9dcff;
         }
 
         .status-message.warning {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%);
-            color: white;
-            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(255, 251, 235, .97);
+            color: #713b12;
+            border-color: #f4cf78;
         }
+        .status-message.warning::before { background: #d97706; }
 
         /* Panel Recommendations */
         .panel-recommendation {
@@ -8933,7 +8945,10 @@ ${systemContext}`
 
         function showStatus(message, type) {
             const statusEl = document.getElementById('statusMessage');
-            statusEl.textContent = message;
+            const cleanMessage = String(message)
+                .replace(/^[\s\u2705\u2713\u2714\u2728\u26A0\u2139\u274C\u{1F300}-\u{1FAFF}\uFE0F\u200D]+/u, '')
+                .trim();
+            statusEl.textContent = cleanMessage;
             statusEl.className = `status-message show ${type}`;
             setTimeout(() => statusEl.classList.remove('show'), 5000);
         }
