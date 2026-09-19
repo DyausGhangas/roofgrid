@@ -2,7 +2,6 @@
 
 import base64
 from datetime import datetime, timedelta, timezone
-import html
 from email.utils import parseaddr
 import json
 import logging
@@ -97,20 +96,80 @@ def _query_parameters(event):
     return event.get("queryStringParameters") or {}
 
 
-def _strip_reasoning(content):
-    """Remove hidden GPT-OSS reasoning from user-facing chat responses."""
-    if not isinstance(content, str):
-        return content
+def _message_text(content):
+    """Convert an OpenAI-style message content value to plain text."""
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and isinstance(item.get("text"), str):
+                parts.append(item["text"])
+        return "\n".join(parts).strip()
+    return ""
 
-    normalized = html.unescape(content)
-    for tag in ("reasoning", "analysis"):
-        normalized = re.sub(
-            rf'[\\]*<{tag}\\b[^>]*>.*?[\\]*</{tag}\\s*>',
-            '',
-            normalized,
-            flags=re.IGNORECASE | re.DOTALL,
-        )
-    return normalized.strip()
+
+def _converse_messages(messages):
+    """Map OpenAI-style chat messages to the Bedrock Converse structure."""
+    system = []
+    conversation = []
+
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        role = str(message.get("role", "")).strip().lower()
+        text = _message_text(message.get("content"))
+        if not text:
+            continue
+
+        if role in ("system", "developer"):
+            system.append({"text": text})
+        elif role in ("user", "assistant"):
+            conversation.append({
+                "role": role,
+                "content": [{"text": text}],
+            })
+
+    return system, conversation
+
+
+def _openai_response_from_converse(response, model):
+    """Return only user-facing text blocks in the shape expected by the frontend."""
+    content_blocks = (
+        response.get("output", {})
+        .get("message", {})
+        .get("content", [])
+    )
+    text_parts = [
+        block["text"]
+        for block in content_blocks
+        if isinstance(block, dict) and isinstance(block.get("text"), str)
+    ]
+    answer = "\n".join(part for part in text_parts if part).strip()
+    if not answer:
+        raise ValueError("Bedrock returned no user-facing text")
+
+    usage = response.get("usage") or {}
+    return {
+        "id": response.get("ResponseMetadata", {}).get("RequestId", "bedrock"),
+        "object": "chat.completion",
+        "model": model,
+        "choices": [{
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": answer,
+            },
+            "finish_reason": response.get("stopReason", "stop"),
+        }],
+        "usage": {
+            "prompt_tokens": usage.get("inputTokens", 0),
+            "completion_tokens": usage.get("outputTokens", 0),
+            "total_tokens": usage.get("totalTokens", 0),
+        },
+    }
 
 
 def _consume_ai_quota():
@@ -194,34 +253,40 @@ def _handle_ai(event):
     except (TypeError, ValueError):
         token_limit = 700
 
-    native_request = {
-        "messages": messages,
-        "max_completion_tokens": token_limit,
+    system_messages, conversation = _converse_messages(messages)
+    if not conversation:
+        return _response(400, {"error": "At least one user or assistant message is required."})
+
+    inference_config = {
+        "maxTokens": token_limit,
         "temperature": payload.get("temperature", 0.3),
-        "top_p": payload.get("top_p", 0.9),
-        "stream": False,
-        "reasoning_effort": "low",
+        "topP": payload.get("top_p", 0.9),
     }
-    if payload.get("stop") is not None:
-        native_request["stop"] = payload["stop"]
+    stop = payload.get("stop")
+    if isinstance(stop, str) and stop:
+        inference_config["stopSequences"] = [stop]
+    elif isinstance(stop, list):
+        stop_sequences = [str(value) for value in stop if str(value)]
+        if stop_sequences:
+            inference_config["stopSequences"] = stop_sequences
 
     try:
         import boto3
 
         bedrock = boto3.client("bedrock-runtime")
-        upstream = bedrock.invoke_model(
-            modelId=model,
-            contentType="application/json",
-            accept="application/json",
-            body=json.dumps(native_request),
-        )
-        result = json.loads(upstream["body"].read().decode("utf-8"))
+        converse_request = {
+            "modelId": model,
+            "messages": conversation,
+            "inferenceConfig": inference_config,
+            "additionalModelRequestFields": {
+                "reasoning_effort": "low",
+            },
+        }
+        if system_messages:
+            converse_request["system"] = system_messages
 
-        for choice in result.get("choices", []):
-            message = choice.get("message")
-            if isinstance(message, dict):
-                message["content"] = _strip_reasoning(message.get("content"))
-
+        upstream = bedrock.converse(**converse_request)
+        result = _openai_response_from_converse(upstream, model)
         return _response(200, result)
     except Exception as error:
         response = getattr(error, "response", {}) or {}
