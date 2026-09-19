@@ -51,7 +51,7 @@ The result is an early-stage planning workspace that helps property owners, desi
 - NASA POWER solar-resource and temperature data with bundled regional fallbacks
 - Editable currency, tariffs, export credit, installation cost, usage, and grid-emissions assumptions
 - Energy, financial, and environmental estimates in one planning workspace
-- Optional Groq-powered AI assistant and downloadable PDF reports
+- Optional AI assistant (Groq on Vercel/local development, Amazon Bedrock on AWS) and downloadable PDF reports
 
 ## Environmental impact and the SDGs
 
@@ -84,7 +84,7 @@ In practical terms, the planner helps quantify:
 | Layout | Browser-based geometry using the selected roof, exclusions, access path, and panel settings |
 | Finance | User-editable cost, tariff, export-credit, usage, degradation, and discount assumptions |
 | Environmental impact | Estimated generation multiplied by an editable grid-emissions factor |
-| AI | Optional server-side OpenAI-compatible chat proxy, configured for Groq by default |
+| AI | Server-side chat: Groq for local/Vercel deployments and Amazon Bedrock GPT-OSS for AWS |
 
 ## Run locally
 
@@ -124,24 +124,23 @@ Keep these variables server-side. Do not prefix them with `NEXT_PUBLIC_` or expo
 
 ## Deploy to AWS
 
-The AWS deployment runs the static site on **Amplify Hosting** and the existing `/api/*` routes on **API Gateway + Lambda**. Amplify uses Amazon S3 and CloudFront behind the scenes, while Lambda logs are available in CloudWatch. This is an additional deployment path; it does not change or disable the Vercel deployment.
+The AWS deployment runs the static site on **Amplify Hosting** and the existing `/api/*` routes on **API Gateway + Lambda**. RoofGrid AI uses **Amazon Bedrock** through the Lambda execution role, so no Groq API key or Bedrock API key is stored for the AWS deployment. The Vercel deployment remains separate and continues to use its existing Groq configuration.
 
-### 1. Store the private settings
+### 1. Store the contact setting
 
-In AWS Secrets Manager, create one secret containing this JSON:
+The AWS secret only needs the contact-form recipient:
 
 ```json
 {
-  "GROQ_API_KEY": "gsk_your_real_key",
   "CONTACT_EMAIL": "you@example.com"
 }
 ```
 
-Copy the secret ARN. Never add these values to Amplify environment variables, the repository, or browser code.
+`aws/deploy.sh` creates or updates `roofgrid/config` automatically. Bedrock authentication is handled by IAM.
 
 ### 2. Deploy the API
 
-For the quickest setup, authenticate the AWS CLI and run:
+From an authenticated AWS CloudShell or AWS CLI environment:
 
 ```bash
 bash aws/deploy.sh
@@ -151,18 +150,26 @@ The helper will:
 
 - create or update the `roofgrid/config` Secrets Manager secret;
 - build the Lambda package with SAM;
+- grant the Lambda role permission to invoke the configured Bedrock model;
+- create a small DynamoDB table that enforces a deployment-wide daily AI request cap;
+- apply API Gateway throttling to the AI routes;
 - deploy API Gateway + Lambda through CloudFormation;
 - run the `/api/health` check; and
 - optionally configure the Amplify `/api/<*>` rewrite when you provide your Amplify app ID.
 
-You can override defaults before running it:
+The default safeguards are **100 Bedrock requests per UTC day**, a **0.5 request/second** steady-state AI rate, and a **burst of 3**. They are configurable:
 
 ```bash
-AWS_REGION=ap-south-1 \
-STACK_NAME=roofgrid-api \
+AWS_REGION=ap-southeast-2 \
+AI_DAILY_REQUEST_LIMIT=100 \
+AI_THROTTLE_RATE=0.5 \
+AI_THROTTLE_BURST_LIMIT=3 \
 ALLOWED_ORIGIN=https://your-amplify-domain.amplifyapp.com \
+AMPLIFY_APP_ID=your-amplify-app-id \
 bash aws/deploy.sh
 ```
+
+The default Bedrock model is `openai.gpt-oss-120b-1:0`.
 
 Or deploy manually:
 
@@ -172,32 +179,32 @@ sam build
 sam deploy --guided
 ```
 
-Use a stack name such as `roofgrid-api`, choose your AWS Region, and provide the Secrets Manager ARN when SAM asks for `RoofGridSecretArn`. Keep `AllowedOrigin` as `*` for the first deployment. SAM creates the Lambda function, API Gateway routes, IAM permission for that one secret, and CloudWatch logging. Save the deployment configuration when prompted.
+SAM creates the Lambda function, HTTP API routes, Bedrock IAM permission, DynamoDB quota table, Secrets Manager permission, and CloudWatch logging.
 
-When deployment finishes, copy the `ApiUrl` output. Confirm the API is live by opening:
+When deployment finishes, confirm:
 
 ```text
 https://YOUR_API_ID.execute-api.YOUR_REGION.amazonaws.com/api/health
 ```
 
+and test AI through the unchanged endpoint:
+
+```text
+POST /api/ai
+```
+
 ### 3. Deploy the site with Amplify Hosting
 
 1. In Amplify Hosting, connect this GitHub repository and branch. This project is **not a monorepo**, so leave the monorepo option off.
-2. Amplify will read the root `amplify.yml`; no framework preset, frontend build command, or output directory needs to be entered manually.
+2. Amplify reads the root `amplify.yml`.
 3. Deploy the branch.
-4. Open **Hosting → Rewrites and redirects** and add the reverse proxy below as the first rule:
+4. Keep the `/api/<*>` reverse proxy pointed at the API Gateway URL. The deployment helper can configure it automatically when `AMPLIFY_APP_ID` is provided.
 
-| Source | Target | Type |
-| --- | --- | --- |
-| `/api/<*>` | `https://YOUR_API_ID.execute-api.YOUR_REGION.amazonaws.com/api/<*>` | `200 (Rewrite)` |
-
-Replace the target host with the `ApiUrl` from SAM. An importable example is available in `aws/amplify-rewrites.example.json`.
-
-The proxy keeps all frontend requests on `/api/ai`, `/api/contact`, `/api/nasa`, and `/api/overpass`, so no application code or public API URL has to be changed. After the Amplify domain is final, redeploy the SAM stack with that origin for `AllowedOrigin` if you want to restrict direct cross-origin API calls.
+The browser still calls `/api/ai`, `/api/contact`, `/api/nasa`, and `/api/overpass`; only the AWS AI implementation changes from Groq to Bedrock.
 
 ### Updating the AWS deployment
 
-Amplify rebuilds the frontend after a push to the connected branch. Backend changes are deployed separately:
+Amplify rebuilds the frontend after a push to its connected branch. Backend changes are deployed separately:
 
 ```bash
 cd aws
@@ -205,7 +212,7 @@ sam build
 sam deploy
 ```
 
-The AWS and Vercel deployments can remain live at the same time. Vercel continues to use `vercel.json` and the handlers in `api/`; AWS uses `amplify.yml` and `aws/template.yaml`.
+The AWS and Vercel deployments can remain live at the same time. Vercel continues to use `vercel.json` and the handlers in `api/`; AWS uses `amplify.yml`, `aws/template.yaml`, and Amazon Bedrock.
 
 ## Planning limitations
 
