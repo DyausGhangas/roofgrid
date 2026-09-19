@@ -16,40 +16,53 @@ for cmd in aws sam python3 curl; do
 done
 
 if ! aws sts get-caller-identity >/dev/null 2>&1; then
-  echo "AWS CLI is not authenticated. Run 'aws configure' or authenticate your AWS profile first." >&2
+  echo "AWS CLI is not authenticated." >&2
   exit 1
 fi
+
+export AWS_PAGER=""
 
 REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-}}"
 if [[ -z "$REGION" ]]; then
   REGION="$(aws configure get region 2>/dev/null || true)"
 fi
-REGION="${REGION:-ap-south-1}"
+REGION="${REGION:-ap-southeast-2}"
 STACK_NAME="${STACK_NAME:-roofgrid-api}"
 SECRET_NAME="${SECRET_NAME:-roofgrid/config}"
 ALLOWED_ORIGIN="${ALLOWED_ORIGIN:-*}"
+AI_MODEL="${AI_MODEL:-openai.gpt-oss-120b-1:0}"
+AI_DAILY_REQUEST_LIMIT="${AI_DAILY_REQUEST_LIMIT:-100}"
+AI_THROTTLE_RATE="${AI_THROTTLE_RATE:-0.5}"
+AI_THROTTLE_BURST_LIMIT="${AI_THROTTLE_BURST_LIMIT:-3}"
 
 echo "AWS region: $REGION"
 echo "CloudFormation stack: $STACK_NAME"
 echo "Secrets Manager secret: $SECRET_NAME"
+echo "Bedrock model: $AI_MODEL"
+echo "AI daily request cap: $AI_DAILY_REQUEST_LIMIT"
+echo "AI throttle: $AI_THROTTLE_RATE req/s, burst $AI_THROTTLE_BURST_LIMIT"
 echo "Allowed browser origin: $ALLOWED_ORIGIN"
 echo
 
-if [[ -z "${GROQ_API_KEY:-}" ]]; then
-  read -r -s -p "Groq API key: " GROQ_API_KEY
-  echo
+SECRET_EXISTS=false
+if aws secretsmanager describe-secret --secret-id "$SECRET_NAME" --region "$REGION" >/dev/null 2>&1; then
+  SECRET_EXISTS=true
+fi
+
+if [[ -z "${CONTACT_EMAIL:-}" && "$SECRET_EXISTS" == "true" ]]; then
+  CONTACT_EMAIL="$(aws secretsmanager get-secret-value     --secret-id "$SECRET_NAME"     --region "$REGION"     --query SecretString     --output text | python3 -c 'import json,sys; print(json.load(sys.stdin).get("CONTACT_EMAIL",""))' 2>/dev/null || true)"
 fi
 
 if [[ -z "${CONTACT_EMAIL:-}" ]]; then
   read -r -p "Contact form recipient email: " CONTACT_EMAIL
 fi
 
-if [[ -z "$GROQ_API_KEY" || -z "$CONTACT_EMAIL" ]]; then
-  echo "GROQ_API_KEY and CONTACT_EMAIL are required." >&2
+if [[ -z "$CONTACT_EMAIL" ]]; then
+  echo "CONTACT_EMAIL is required." >&2
   exit 1
 fi
 
-export GROQ_API_KEY CONTACT_EMAIL
+export CONTACT_EMAIL
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
@@ -61,7 +74,6 @@ import os
 import sys
 
 payload = {
-    "GROQ_API_KEY": os.environ["GROQ_API_KEY"],
     "CONTACT_EMAIL": os.environ["CONTACT_EMAIL"],
 }
 
@@ -70,7 +82,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as handle:
 PY
 chmod 600 "$SECRET_FILE"
 
-if aws secretsmanager describe-secret   --secret-id "$SECRET_NAME"   --region "$REGION" >/dev/null 2>&1; then
+if [[ "$SECRET_EXISTS" == "true" ]]; then
   echo "Updating existing Secrets Manager secret..."
   aws secretsmanager put-secret-value     --secret-id "$SECRET_NAME"     --secret-string "file://$SECRET_FILE"     --region "$REGION" >/dev/null
   SECRET_ARN="$(aws secretsmanager describe-secret     --secret-id "$SECRET_NAME"     --region "$REGION"     --query ARN     --output text)"
@@ -82,8 +94,8 @@ fi
 echo "Building Lambda package..."
 sam build --template-file template.yaml
 
-echo "Deploying API Gateway + Lambda..."
-sam deploy   --template-file .aws-sam/build/template.yaml   --stack-name "$STACK_NAME"   --region "$REGION"   --capabilities CAPABILITY_IAM   --resolve-s3   --no-confirm-changeset   --no-fail-on-empty-changeset   --parameter-overrides     "RoofGridSecretArn=$SECRET_ARN"     "AllowedOrigin=$ALLOWED_ORIGIN"
+echo "Deploying API Gateway + Lambda + Bedrock permissions..."
+sam deploy   --template-file .aws-sam/build/template.yaml   --stack-name "$STACK_NAME"   --region "$REGION"   --capabilities CAPABILITY_IAM   --resolve-s3   --no-confirm-changeset   --no-fail-on-empty-changeset   --parameter-overrides     "RoofGridSecretArn=$SECRET_ARN"     "AllowedOrigin=$ALLOWED_ORIGIN"     "AiModel=$AI_MODEL"     "AiDailyRequestLimit=$AI_DAILY_REQUEST_LIMIT"     "AiThrottleRate=$AI_THROTTLE_RATE"     "AiThrottleBurstLimit=$AI_THROTTLE_BURST_LIMIT"
 
 API_URL="$(aws cloudformation describe-stacks   --stack-name "$STACK_NAME"   --region "$REGION"   --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue | [0]"   --output text)"
 
@@ -145,6 +157,8 @@ echo
 echo "RoofGrid AWS backend is live:"
 echo "  API:    $API_URL"
 echo "  Health: $API_URL/api/health"
+echo "  AI:     Amazon Bedrock ($AI_MODEL)"
+echo "  Limit:  $AI_DAILY_REQUEST_LIMIT AI requests/day, $AI_THROTTLE_RATE req/s, burst $AI_THROTTLE_BURST_LIMIT"
 echo
 if [[ "$ALLOWED_ORIGIN" == "*" ]]; then
   echo "Production hardening: rerun with ALLOWED_ORIGIN=https://YOUR_AMPLIFY_DOMAIN to restrict direct browser API access."
