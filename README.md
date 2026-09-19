@@ -124,7 +124,44 @@ Keep these variables server-side. Do not prefix them with `NEXT_PUBLIC_` or expo
 
 ## Deploy to AWS
 
+**Live AWS deployment:** https://main.d5qymiq46yhlb.amplifyapp.com
+
 The AWS deployment runs the static site on **Amplify Hosting** and the existing `/api/*` routes on **API Gateway + Lambda**. RoofGrid AI uses **Amazon Bedrock** through the Lambda execution role, so no Groq API key or Bedrock API key is stored for the AWS deployment. The Vercel deployment remains separate and continues to use its existing Groq configuration.
+
+### AWS services used
+
+| Area | AWS service | How RoofGrid uses it |
+| --- | --- | --- |
+| AI | **Amazon Bedrock** | Runs the RoofGrid AI assistant using `openai.gpt-oss-120b-1:0` without storing an external AI API key. |
+| Serverless | **AWS Lambda** | Executes the backend routes for AI, contact, NASA POWER, and OpenStreetMap/Overpass requests. |
+| Serverless | **Amazon API Gateway** | Exposes the Lambda backend through the existing `/api/*` HTTP routes used by the browser. |
+| Hosting | **AWS Amplify Hosting** | Deploys the static RoofGrid frontend from GitHub and provides the public production URL. |
+| Data | **Amazon DynamoDB** | Stores the deployment-wide daily AI request counter used to cap Bedrock usage. |
+| Observability | **Amazon CloudWatch** | Captures Lambda logs and runtime diagnostics for the AWS backend. |
+| Secrets | **AWS Secrets Manager** | Stores the server-side contact recipient configuration. Bedrock itself uses IAM rather than an API key. |
+| Security | **AWS Identity and Access Management (IAM)** | Gives Lambda least-privilege access to Bedrock, DynamoDB, and Secrets Manager. |
+| Infrastructure as code | **AWS SAM + AWS CloudFormation** | Builds and deploys the Lambda, API Gateway routes, IAM policies, DynamoDB quota table, and related AWS resources. |
+
+For the challenge categories shown in the AWS track, RoofGrid directly uses **Lambda + API Gateway** for Serverless, **Amplify Hosting** for deployment, **DynamoDB** for Data, and **CloudWatch** for observability/plumbing. The AI layer is implemented with **Amazon Bedrock**.
+
+The production request path is:
+
+```text
+Browser
+  ↓
+AWS Amplify Hosting
+  ↓
+Amazon API Gateway
+  ↓
+AWS Lambda
+  ├── Amazon Bedrock → RoofGrid AI
+  ├── Amazon DynamoDB → daily AI quota
+  ├── AWS Secrets Manager → private server configuration
+  ├── NASA POWER API
+  └── OpenStreetMap / Overpass API
+
+CloudWatch records backend logs and diagnostics.
+```
 
 ### 1. Store the contact setting
 
