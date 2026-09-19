@@ -103,12 +103,13 @@ def _strip_reasoning(content):
         return content
 
     normalized = html.unescape(content)
-    normalized = re.sub(
-        r'(?:\\)*<(reasoning|analysis)\\b[^>]*>.*?(?:\\)*</\\1\\s*>',
-        '',
-        normalized,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
+    for tag in ("reasoning", "analysis"):
+        normalized = re.sub(
+            rf'[\\]*<{tag}\\b[^>]*>.*?[\\]*</{tag}\\s*>',
+            '',
+            normalized,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
     return normalized.strip()
 
 
