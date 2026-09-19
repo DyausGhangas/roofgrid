@@ -2,6 +2,7 @@
 
 import base64
 from datetime import datetime, timedelta, timezone
+import html
 from email.utils import parseaddr
 import json
 import logging
@@ -97,30 +98,14 @@ def _query_parameters(event):
 
 
 def _strip_reasoning(content):
-    """Hide GPT-OSS reasoning blocks from user-facing chat responses."""
+    """Remove hidden GPT-OSS reasoning from user-facing chat responses."""
     if not isinstance(content, str):
         return content
 
-    normalized = (
-        content
-        .replace(r"\\<reasoning>", "<reasoning>")
-        .replace(r"\\</reasoning>", "</reasoning>")
-        .replace("&lt;reasoning&gt;", "<reasoning>")
-        .replace("&lt;/reasoning&gt;", "</reasoning>")
-        .replace(r"\\<analysis>", "<analysis>")
-        .replace(r"\\</analysis>", "</analysis>")
-        .replace("&lt;analysis&gt;", "<analysis>")
-        .replace("&lt;/analysis&gt;", "</analysis>")
-    )
+    normalized = html.unescape(content)
     normalized = re.sub(
-        r"<reasoning\\b[^>]*>.*?</reasoning\\s*>",
-        "",
-        normalized,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
-    normalized = re.sub(
-        r"<analysis\\b[^>]*>.*?</analysis\\s*>",
-        "",
+        r'(?:\\)*<(reasoning|analysis)\\b[^>]*>.*?(?:\\)*</\\1\\s*>',
+        '',
         normalized,
         flags=re.IGNORECASE | re.DOTALL,
     )
