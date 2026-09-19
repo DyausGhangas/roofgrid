@@ -97,10 +97,34 @@ def _query_parameters(event):
 
 
 def _strip_reasoning(content):
-    """Hide GPT-OSS reasoning tags from user-facing chat responses."""
+    """Hide GPT-OSS reasoning blocks from user-facing chat responses."""
     if not isinstance(content, str):
         return content
-    return re.sub(r"^\\s*<reasoning>.*?</reasoning>\\s*", "", content, flags=re.DOTALL)
+
+    normalized = (
+        content
+        .replace(r"\\<reasoning>", "<reasoning>")
+        .replace(r"\\</reasoning>", "</reasoning>")
+        .replace("&lt;reasoning&gt;", "<reasoning>")
+        .replace("&lt;/reasoning&gt;", "</reasoning>")
+        .replace(r"\\<analysis>", "<analysis>")
+        .replace(r"\\</analysis>", "</analysis>")
+        .replace("&lt;analysis&gt;", "<analysis>")
+        .replace("&lt;/analysis&gt;", "</analysis>")
+    )
+    normalized = re.sub(
+        r"<reasoning\\b[^>]*>.*?</reasoning\\s*>",
+        "",
+        normalized,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    normalized = re.sub(
+        r"<analysis\\b[^>]*>.*?</analysis\\s*>",
+        "",
+        normalized,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    return normalized.strip()
 
 
 def _consume_ai_quota():
@@ -190,6 +214,7 @@ def _handle_ai(event):
         "temperature": payload.get("temperature", 0.3),
         "top_p": payload.get("top_p", 0.9),
         "stream": False,
+        "reasoning_effort": "low",
     }
     if payload.get("stop") is not None:
         native_request["stop"] = payload["stop"]
