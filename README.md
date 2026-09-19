@@ -141,7 +141,30 @@ Copy the secret ARN. Never add these values to Amplify environment variables, th
 
 ### 2. Deploy the API
 
-Install and configure the AWS CLI and AWS SAM CLI, then run:
+For the quickest setup, authenticate the AWS CLI and run:
+
+```bash
+bash aws/deploy.sh
+```
+
+The helper will:
+
+- create or update the `roofgrid/config` Secrets Manager secret;
+- build the Lambda package with SAM;
+- deploy API Gateway + Lambda through CloudFormation;
+- run the `/api/health` check; and
+- optionally configure the Amplify `/api/<*>` rewrite when you provide your Amplify app ID.
+
+You can override defaults before running it:
+
+```bash
+AWS_REGION=ap-south-1 \
+STACK_NAME=roofgrid-api \
+ALLOWED_ORIGIN=https://your-amplify-domain.amplifyapp.com \
+bash aws/deploy.sh
+```
+
+Or deploy manually:
 
 ```bash
 cd aws
