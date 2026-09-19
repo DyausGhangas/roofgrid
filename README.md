@@ -122,6 +122,68 @@ Never put real credentials in `.env.example`, frontend JavaScript, or any commit
 
 Keep these variables server-side. Do not prefix them with `NEXT_PUBLIC_` or expose them in browser code.
 
+## Deploy to AWS
+
+The AWS deployment runs the static site on **Amplify Hosting** and the existing `/api/*` routes on **API Gateway + Lambda**. Amplify uses Amazon S3 and CloudFront behind the scenes, while Lambda logs are available in CloudWatch. This is an additional deployment path; it does not change or disable the Vercel deployment.
+
+### 1. Store the private settings
+
+In AWS Secrets Manager, create one secret containing this JSON:
+
+```json
+{
+  "GROQ_API_KEY": "gsk_your_real_key",
+  "CONTACT_EMAIL": "you@example.com"
+}
+```
+
+Copy the secret ARN. Never add these values to Amplify environment variables, the repository, or browser code.
+
+### 2. Deploy the API
+
+Install and configure the AWS CLI and AWS SAM CLI, then run:
+
+```bash
+cd aws
+sam build
+sam deploy --guided
+```
+
+Use a stack name such as `roofgrid-api`, choose your AWS Region, and provide the Secrets Manager ARN when SAM asks for `RoofGridSecretArn`. Keep `AllowedOrigin` as `*` for the first deployment. SAM creates the Lambda function, API Gateway routes, IAM permission for that one secret, and CloudWatch logging. Save the deployment configuration when prompted.
+
+When deployment finishes, copy the `ApiUrl` output. Confirm the API is live by opening:
+
+```text
+https://YOUR_API_ID.execute-api.YOUR_REGION.amazonaws.com/api/health
+```
+
+### 3. Deploy the site with Amplify Hosting
+
+1. In Amplify Hosting, connect this GitHub repository and branch. This project is **not a monorepo**, so leave the monorepo option off.
+2. Amplify will read the root `amplify.yml`; no framework preset, frontend build command, or output directory needs to be entered manually.
+3. Deploy the branch.
+4. Open **Hosting → Rewrites and redirects** and add the reverse proxy below as the first rule:
+
+| Source | Target | Type |
+| --- | --- | --- |
+| `/api/<*>` | `https://YOUR_API_ID.execute-api.YOUR_REGION.amazonaws.com/api/<*>` | `200 (Rewrite)` |
+
+Replace the target host with the `ApiUrl` from SAM. An importable example is available in `aws/amplify-rewrites.example.json`.
+
+The proxy keeps all frontend requests on `/api/ai`, `/api/contact`, `/api/nasa`, and `/api/overpass`, so no application code or public API URL has to be changed. After the Amplify domain is final, redeploy the SAM stack with that origin for `AllowedOrigin` if you want to restrict direct cross-origin API calls.
+
+### Updating the AWS deployment
+
+Amplify rebuilds the frontend after a push to the connected branch. Backend changes are deployed separately:
+
+```bash
+cd aws
+sam build
+sam deploy
+```
+
+The AWS and Vercel deployments can remain live at the same time. Vercel continues to use `vercel.json` and the handlers in `api/`; AWS uses `amplify.yml` and `aws/template.yaml`.
+
 ## Planning limitations
 
 - Satellite imagery and OpenStreetMap outlines may be incomplete, outdated, or misaligned.

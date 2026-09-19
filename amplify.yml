@@ -1,0 +1,15 @@
+version: 1
+frontend:
+  phases:
+    build:
+      commands:
+        - rm -rf dist
+        - mkdir -p dist
+        - cp index.html privacy.html solar_advanced.html sw.js LICENSE dist/
+        - cp -R assets data dist/
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths: []

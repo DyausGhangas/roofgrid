@@ -48,6 +48,11 @@ build/
 .vite/
 *.min.js
 *.min.css
+.aws-sam/
+aws/.aws-sam/
+aws/samconfig.toml
+aws/env.json
+aws/secret.json
 
 # Test files
 *.test.js
