@@ -15,11 +15,7 @@ import urllib.request
 logger = logging.getLogger("roofgrid.aws")
 logger.setLevel(logging.INFO)
 
-AI_PROVIDER_DEFAULTS = {
-    "groq": ("https://api.groq.com/openai/v1/chat/completions", "openai/gpt-oss-120b"),
-    "openai": ("https://api.openai.com/v1/chat/completions", "gpt-4.1-mini"),
-    "openrouter": ("https://openrouter.ai/api/v1/chat/completions", "openai/gpt-4.1-mini"),
-}
+BEDROCK_MODEL_DEFAULT = "openai.gpt-oss-120b-1:0"
 OVERPASS_ENDPOINTS = (
     "https://overpass-api.de/api/interpreter",
     "https://overpass.openstreetmap.fr/api/interpreter",
@@ -68,16 +64,7 @@ def _runtime_config():
         return _runtime_config_cache
 
     config = {
-        key: os.getenv(key, "").strip()
-        for key in (
-            "GROQ_API_KEY",
-            "CONTACT_EMAIL",
-            "AI_API_KEY",
-            "AI_BASE_URL",
-            "AI_AUTH_HEADER",
-            "AI_AUTH_SCHEME",
-            "AI_ALLOW_NO_AUTH",
-        )
+        "CONTACT_EMAIL": os.getenv("CONTACT_EMAIL", "").strip(),
     }
     secret_arn = os.getenv("ROOFGRID_SECRET_ARN", "").strip()
     if secret_arn:
@@ -109,24 +96,63 @@ def _query_parameters(event):
     return event.get("queryStringParameters") or {}
 
 
+def _strip_reasoning(content):
+    """Hide GPT-OSS reasoning tags from user-facing chat responses."""
+    if not isinstance(content, str):
+        return content
+    return re.sub(r"^\\s*<reasoning>.*?</reasoning>\\s*", "", content, flags=re.DOTALL)
+
+
+def _consume_ai_quota():
+    """Atomically enforce the deployment-wide daily Bedrock request cap."""
+    table_name = os.getenv("AI_USAGE_TABLE", "").strip()
+    try:
+        daily_limit = int(os.getenv("AI_DAILY_REQUEST_LIMIT", "100"))
+    except ValueError:
+        daily_limit = 100
+
+    if not table_name or daily_limit <= 0:
+        logger.error("AI quota configuration is missing or invalid")
+        return None
+
+    now = datetime.now(timezone.utc)
+    quota_key = now.strftime("%Y-%m-%d")
+    tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    expires_at = int((tomorrow + timedelta(days=2)).timestamp())
+
+    try:
+        import boto3
+        from botocore.exceptions import ClientError
+
+        dynamodb = boto3.client("dynamodb")
+        dynamodb.update_item(
+            TableName=table_name,
+            Key={"quota_key": {"S": quota_key}},
+            UpdateExpression=(
+                "SET #count = if_not_exists(#count, :zero) + :one, "
+                "expires_at = :expires"
+            ),
+            ConditionExpression="attribute_not_exists(#count) OR #count < :limit",
+            ExpressionAttributeNames={"#count": "request_count"},
+            ExpressionAttributeValues={
+                ":zero": {"N": "0"},
+                ":one": {"N": "1"},
+                ":limit": {"N": str(daily_limit)},
+                ":expires": {"N": str(expires_at)},
+            },
+        )
+        return True
+    except ClientError as error:
+        if error.response.get("Error", {}).get("Code") == "ConditionalCheckFailedException":
+            return False
+        logger.exception("Unable to update RoofGrid AI quota")
+        return None
+    except Exception:
+        logger.exception("Unable to update RoofGrid AI quota")
+        return None
+
+
 def _handle_ai(event):
-    config = _runtime_config()
-    provider = os.getenv("AI_PROVIDER", "groq").strip().lower()
-    default_endpoint, default_model = AI_PROVIDER_DEFAULTS.get(provider, ("", ""))
-    configured_key = config.get("AI_API_KEY", "")
-    groq_key = config.get("GROQ_API_KEY", "")
-    if "your_" in configured_key.lower():
-        configured_key = ""
-    if "replace_with" in groq_key.lower() or "your_" in groq_key.lower():
-        groq_key = ""
-
-    api_key = configured_key or groq_key
-    endpoint = config.get("AI_BASE_URL", "") or default_endpoint
-    model = os.getenv("AI_MODEL", "").strip() or default_model
-    allow_no_auth = config.get("AI_ALLOW_NO_AUTH", "").lower() in ("1", "true", "yes")
-    if not endpoint or not model or (not api_key and not allow_no_auth):
-        return _response(503, {"error": "AI is not configured on this deployment."})
-
     try:
         payload = _event_body(event, 64 * 1024)
     except OverflowError as error:
@@ -136,44 +162,77 @@ def _handle_ai(event):
 
     if not isinstance(payload, dict):
         return _response(400, {"error": "Invalid AI request."})
-    payload["model"] = model
-    if provider == "groq" and model.startswith("openai/gpt-oss"):
-        token_limit = payload.pop("max_tokens", None)
-        if token_limit is not None:
-            payload["max_completion_tokens"] = token_limit
-        payload.setdefault("reasoning_effort", "low")
-        payload.setdefault("include_reasoning", False)
 
-    request = urllib.request.Request(
-        endpoint,
-        data=json.dumps(payload).encode("utf-8"),
-        method="POST",
-        headers={"Content-Type": "application/json", "User-Agent": "RoofGrid/1.0"},
-    )
-    if api_key:
-        auth_header = config.get("AI_AUTH_HEADER", "") or "Authorization"
-        auth_scheme = config.get("AI_AUTH_SCHEME", "") or "Bearer"
-        request.add_header(auth_header, f"{auth_scheme} {api_key}".strip())
+    messages = payload.get("messages")
+    if not isinstance(messages, list) or not messages:
+        return _response(400, {"error": "At least one AI message is required."})
+
+    quota_status = _consume_ai_quota()
+    if quota_status is False:
+        return _response(429, {
+            "error": "RoofGrid AI has reached its daily usage limit. Please try again tomorrow."
+        })
+    if quota_status is None:
+        return _response(503, {
+            "error": "RoofGrid AI usage protection is temporarily unavailable."
+        })
+
+    model = os.getenv("AI_MODEL", "").strip() or BEDROCK_MODEL_DEFAULT
+    token_limit = payload.get("max_completion_tokens", payload.get("max_tokens", 700))
+    try:
+        token_limit = max(1, min(int(token_limit), 4096))
+    except (TypeError, ValueError):
+        token_limit = 700
+
+    native_request = {
+        "messages": messages,
+        "max_completion_tokens": token_limit,
+        "temperature": payload.get("temperature", 0.3),
+        "top_p": payload.get("top_p", 0.9),
+        "stream": False,
+    }
+    if payload.get("stop") is not None:
+        native_request["stop"] = payload["stop"]
 
     try:
-        with urllib.request.urlopen(request, timeout=15) as upstream:
-            result = json.loads(upstream.read().decode("utf-8"))
-            return _response(upstream.getcode(), result)
-    except urllib.error.HTTPError as error:
-        try:
-            upstream_body = json.loads(error.read().decode("utf-8"))
-            value = upstream_body.get("error", upstream_body)
-            message = value.get("message") if isinstance(value, dict) else str(value)
-        except Exception:
-            message = "The AI provider rejected the request."
-        logger.warning("AI provider returned HTTP %s", error.code)
-        return _response(error.code, {"error": message, "status": error.code})
-    except (urllib.error.URLError, TimeoutError):
-        logger.exception("AI provider is unavailable")
-        return _response(502, {"error": "The AI service is temporarily unavailable."})
-    except Exception:
-        logger.exception("Unexpected AI proxy error")
-        return _response(500, {"error": "The AI request could not be completed."})
+        import boto3
+
+        bedrock = boto3.client("bedrock-runtime")
+        upstream = bedrock.invoke_model(
+            modelId=model,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(native_request),
+        )
+        result = json.loads(upstream["body"].read().decode("utf-8"))
+
+        for choice in result.get("choices", []):
+            message = choice.get("message")
+            if isinstance(message, dict):
+                message["content"] = _strip_reasoning(message.get("content"))
+
+        return _response(200, result)
+    except Exception as error:
+        response = getattr(error, "response", {}) or {}
+        error_info = response.get("Error", {}) if isinstance(response, dict) else {}
+        code = str(error_info.get("Code", ""))
+        logger.exception("Amazon Bedrock invocation failed: %s", code or type(error).__name__)
+
+        if code in ("AccessDeniedException", "UnauthorizedException"):
+            return _response(503, {
+                "error": "RoofGrid AI does not have permission to use Amazon Bedrock."
+            })
+        if code in ("ThrottlingException", "ServiceQuotaExceededException"):
+            return _response(429, {
+                "error": "RoofGrid AI is busy. Please try again shortly."
+            })
+        if code in ("ValidationException", "ResourceNotFoundException"):
+            return _response(502, {
+                "error": "RoofGrid AI model configuration is invalid."
+            })
+        return _response(502, {
+            "error": "RoofGrid AI is temporarily unavailable."
+        })
 
 
 def _handle_contact(event):
