@@ -1,0 +1,56 @@
+name: Feature request
+description: Suggest an improvement to RoofGrid
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for suggesting an improvement. Explain the user problem before proposing implementation details.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: Who needs this and what are they unable to do today?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the desired workflow or outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe workarounds or other approaches you considered.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Roof mapping and geometry
+        - Panel layout
+        - Energy estimates
+        - Financial estimates
+        - Environmental impact
+        - AI assistant
+        - Deployment or infrastructure
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add mockups, examples, or references that clarify the request.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I searched the existing issues for similar requests.
+          required: true
