@@ -342,6 +342,18 @@
         .tile-c p { color: rgba(23,35,31,.68); }
         .tile-d { grid-column: span 8; background: var(--ink); color: white; }
         .tile-d p { color: rgba(255,255,255,.64); }
+        .feature-shot {
+            position: relative;
+            height: 190px;
+            margin: 24px -10px -10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .2);
+            border-radius: 16px;
+            background: #071d31;
+            box-shadow: 0 18px 45px rgba(5, 23, 39, .18);
+        }
+        .feature-shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+        .tile-b .feature-shot { border-color: var(--line); background: var(--paper-deep); box-shadow: 0 18px 45px rgba(23, 35, 31, .1); }
         .mini-map { position: relative; height: 150px; margin-top: 25px; border-radius: 16px; background: #004182; overflow: hidden; }
         .mini-map::before { content: ""; position: absolute; inset: 18px 45px; clip-path: polygon(16% 0, 88% 8%, 100% 77%, 65% 100%, 0 78%); background: rgba(255,255,255,.12); border: 2px dashed var(--lime); }
         .mini-map::after { content: ""; position: absolute; left: 47%; top: 16px; width: 19px; height: 120px; background: var(--lime); opacity: .88; transform: rotate(9deg); }
@@ -609,8 +621,8 @@
                     <h2 class="section-title">Plan every detail. Understand every outcome.</h2>
                 </div>
                 <div class="bento">
-                    <article class="tile tile-a" data-reveal><h3>See the layout, not only a number</h3><p>Review the detected boundary, individual panel placement, access route and obstacles directly over the map.</p><div class="mini-map"></div></article>
-                    <article class="tile tile-b" data-reveal><h3>Configure the hardware</h3><p>Work with standard panel formats and layout controls rather than a single invisible assumption.</p><div class="range"><div class="range-labels"><span>FEWER PANELS</span><span>MAX FIT</span></div><div class="range-line"><span></span></div></div></article>
+                    <article class="tile tile-a" data-reveal><h3>See the layout, not only a number</h3><p>Review the detected boundary, individual panel placement, access route and obstacles directly over the map.</p><figure class="feature-shot"><img src="assets/screenshots/planner-setup.png" alt="RoofGrid planner showing panels arranged on a satellite rooftop with layout controls"></figure></article>
+                    <article class="tile tile-b" data-reveal><h3>Configure the hardware</h3><p>Adjust the panel count, dimensions, orientation, spacing and layout density with visible controls.</p><figure class="feature-shot"><img src="assets/screenshots/energy-analysis.png" alt="RoofGrid analysis interface showing the optimized system layout and energy results"></figure></article>
                     <article class="tile tile-c" data-reveal><h3>Plan globally</h3><p>Start from worldwide search and localize the financial model to your market.</p><div class="currency-row"><span>USD</span><span>INR</span><span>EUR</span><span>AED</span><span>AUD</span><span>GBP</span></div></article>
                     <article class="tile tile-d" data-reveal><h3>Connect roof area to energy and return</h3><p>Move from physical capacity to generation estimates, bill savings, cost and environmental impact without losing the assumptions behind the result.</p><div class="data-lines"><div class="data-line"><span style="width:66%"></span></div><div class="data-line"><span style="width:78%"></span></div><div class="data-line"><span style="width:91%"></span></div></div></article>
                 </div>
