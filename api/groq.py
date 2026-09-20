@@ -13,7 +13,7 @@ AI_PROVIDER_DEFAULTS = {
     "openai": ("https://api.openai.com/v1/chat/completions", "gpt-4.1-mini"),
     "openrouter": ("https://openrouter.ai/api/v1/chat/completions", "openai/gpt-4.1-mini"),
 }
-REQUEST_TIMEOUT = 15  # seconds (safe margin for Vercel's 30s limit)
+REQUEST_TIMEOUT = 15  # seconds for the upstream AI provider
 MAX_REQUEST_SIZE = 64 * 1024  # 64KB max request body
 
 
@@ -52,7 +52,7 @@ class handler(BaseHTTPRequestHandler):
         if not endpoint or not model or (not api_key and not allow_no_auth):
             logger.error("AI provider is not configured")
             self._send_json_response(500, {
-                "error": "AI provider not configured. Add GROQ_API_KEY in Vercel, or configure AI_API_KEY, AI_BASE_URL and AI_MODEL for another provider."
+                "error": "AI provider not configured. Add GROQ_API_KEY to the server environment, or configure AI_API_KEY, AI_BASE_URL and AI_MODEL for another provider."
             })
             return
 
