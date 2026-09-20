@@ -10,7 +10,7 @@
   Locate a roof, map usable space, place panels, and explore energy, financial, and environmental outcomes in one workflow.
 </p>
 
-![RoofGrid landing page showing an access-aware rooftop solar layout](assets/screenshots/landing-page.png)
+![RoofGrid landing page showing an access-aware rooftop solar layout](assets/screenshots/landing-page.jpg)
 
 ## Why RoofGrid
 
@@ -28,19 +28,23 @@ The result is an early-stage planning workspace that helps property owners, desi
 
 ### Find and define a rooftop
 
-![RoofGrid planner showing global satellite search and roof setup controls](assets/screenshots/planner-setup.png)
+![RoofGrid planner showing global satellite search and roof setup controls](assets/screenshots/planner-setup.jpg)
+
+### Optimize the panel layout
+
+![RoofGrid planner showing an access-aware optimized panel layout and panel-count controls](assets/screenshots/optimized-panel-layout.jpg)
 
 ### Review energy potential
 
-![RoofGrid energy analysis showing production and solar resource estimates](assets/screenshots/energy-analysis.png)
+![RoofGrid energy analysis showing production and solar resource estimates](assets/screenshots/energy-analysis.jpg)
 
 ### Explore financial outcomes
 
-![RoofGrid financial analysis showing cost, savings, return, and payback estimates](assets/screenshots/financial-analysis.png)
+![RoofGrid financial analysis showing cost, savings, return, and payback estimates](assets/screenshots/financial-analysis.jpg)
 
 ### Ask questions about the plan
 
-![RoofGrid AI assistant explaining the financial results for a rooftop plan](assets/screenshots/ai-assistant.png)
+![RoofGrid AI assistant ready to answer questions about a completed rooftop plan](assets/screenshots/ai-assistant.jpg)
 
 ## Core capabilities
 
