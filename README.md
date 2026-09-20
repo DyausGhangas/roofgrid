@@ -51,7 +51,7 @@ The result is an early-stage planning workspace that helps property owners, desi
 - NASA POWER solar-resource and temperature data with bundled regional fallbacks
 - Editable currency, tariffs, export credit, installation cost, usage, and grid-emissions assumptions
 - Energy, financial, and environmental estimates in one planning workspace
-- Optional AI assistant (Groq on Vercel/local development, Amazon Bedrock on AWS) and downloadable PDF reports
+- Optional AI assistant (Groq for local development, Amazon Bedrock on AWS) and downloadable PDF reports
 
 ## Environmental impact and the SDGs
 
@@ -84,7 +84,7 @@ In practical terms, the planner helps quantify:
 | Layout | Browser-based geometry using the selected roof, exclusions, access path, and panel settings |
 | Finance | User-editable cost, tariff, export-credit, usage, degradation, and discount assumptions |
 | Environmental impact | Estimated generation multiplied by an editable grid-emissions factor |
-| AI | Server-side chat: Groq for local/Vercel deployments and Amazon Bedrock GPT-OSS for AWS |
+| AI | Server-side chat: Groq for local development and Amazon Bedrock GPT-OSS on AWS |
 
 ## Run locally
 
@@ -112,21 +112,11 @@ CONTACT_EMAIL=you@example.com
 
 Never put real credentials in `.env.example`, frontend JavaScript, or any committed file. Restart the local server after changing `.env.local`.
 
-## Deploy to Vercel
-
-1. Import this repository into Vercel and select the **Other** framework preset.
-2. Leave the build, output, and install commands empty; `vercel.json` contains the required routes.
-3. Add `GROQ_API_KEY` and `CONTACT_EMAIL` under **Production and Preview** environment variables.
-4. Add any optional AI provider or model variables described in `.env.example`.
-5. Deploy again after adding or changing environment variables.
-
-Keep these variables server-side. Do not prefix them with `NEXT_PUBLIC_` or expose them in browser code.
-
 ## Deploy to AWS
 
 **Live AWS deployment:** https://main.d5qymiq46yhlb.amplifyapp.com
 
-The AWS deployment runs the static site on **Amplify Hosting** and the existing `/api/*` routes on **API Gateway + Lambda**. RoofGrid AI uses **Amazon Bedrock** through the Lambda execution role, so no Groq API key or Bedrock API key is stored for the AWS deployment. The Vercel deployment remains separate and continues to use its existing Groq configuration.
+The production deployment runs the static site on **AWS Amplify Hosting** and the `/api/*` routes on **Amazon API Gateway + AWS Lambda**. RoofGrid AI uses **Amazon Bedrock** through the Lambda execution role, so no external AI API key or Bedrock API key is stored for production.
 
 ### AWS services used
 
@@ -237,7 +227,7 @@ POST /api/ai
 3. Deploy the branch.
 4. Keep the `/api/<*>` reverse proxy pointed at the API Gateway URL. The deployment helper can configure it automatically when `AMPLIFY_APP_ID` is provided.
 
-The browser still calls `/api/ai`, `/api/contact`, `/api/nasa`, and `/api/overpass`; only the AWS AI implementation changes from Groq to Bedrock.
+The browser calls `/api/ai`, `/api/contact`, `/api/nasa`, and `/api/overpass`; Amplify proxies those routes to API Gateway and Lambda, with AI handled by Amazon Bedrock.
 
 ### Updating the AWS deployment
 
@@ -249,7 +239,7 @@ sam build
 sam deploy
 ```
 
-The AWS and Vercel deployments can remain live at the same time. Vercel continues to use `vercel.json` and the handlers in `api/`; AWS uses `amplify.yml`, `aws/template.yaml`, and Amazon Bedrock.
+The AWS deployment uses `amplify.yml`, `aws/template.yaml`, and Amazon Bedrock.
 
 ## Planning limitations
 
